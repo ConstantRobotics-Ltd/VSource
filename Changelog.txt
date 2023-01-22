@@ -1,0 +1,10 @@
+CHANGELOG
+
+All notable changes to this project will be documented in this file.
+
+
+###############################################################################
+[1.0.0] - 23.01.2023
+###############################################################################
+
+1. First version based on VideoSource interface class.
