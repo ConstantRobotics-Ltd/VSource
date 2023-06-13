@@ -173,6 +173,8 @@ bool encodeDecodeTest()
     int size = 0;
     in.encode(data, size);
 
+    cout << "Encoded data size: " << size << " bytes" << endl;
+
     // Decode data.
     VSourceParams out;
     if (!out.decode(data, size))

@@ -129,9 +129,7 @@ enum class VSourceParam
 enum class VSourceCommand
 {
     /// Restart.
-    RESTART = 1,
-    /// Apply settings.
-    APPLY_PARAMS
+    RESTART = 1
 };
 
 
@@ -152,7 +150,7 @@ public:
     /**
      * @brief Open video source. All params will be set by default.
      * @param initString Init string. Format depends on implementation.
-     * Default format: <video device or ID>;<width>;<height>;<fourcc>
+     * Default format: <video device or ID or file>;<width>;<height>;<fourcc>
      * @return TRUE if the video source open or FALSE if not.
      */
     virtual bool openVSource(std::string& initString) = 0;
@@ -210,10 +208,9 @@ public:
     /**
      * @brief Execute command.
      * @param id Command ID .
-     * @param arg Command argument.
      * @return TRUE if the command accepted or FALSE if not.
      */
-    virtual bool executeCommand(VSourceCommand id, float arg = 0) = 0;
+    virtual bool executeCommand(VSourceCommand id) = 0;
 };
 
 }
