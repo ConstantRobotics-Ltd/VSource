@@ -1,56 +1,179 @@
 #pragma once
-#include <atomic>
-#include <thread>
-#include <mutex>
-#include <cstring>
-#include <vector>
-#include <condition_variable>
-#include "VideoSource.h"
+#include "Frame.h"
+#include "ConfigReader.h"
 
 
 
 namespace cr
 {
-namespace vsource
+namespace video
 {
 /**
- * @brief Video source class based on V4L2 API.
-*/
-class VideoSourceV4L2 : public VideoSource
+ * @brief Video source params structure.
+ */
+class VSourceParams
+{
+public:
+    /// Log level: Disable, Console, File, Console and file.
+    std::string logLevel{"Disable"};
+    /// Video source name.
+    std::string source{"/dev/video0"};
+    /// FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12.
+    std::string fourcc{"YUYV"};
+    /// Frame width. 0 - will be set automatically.
+    int width{1920};
+    /// Frame height. 0 - will be set automatically.
+    int height{1080};
+    /// Gain mode. Depends on implementation. Default: 0 - Manual, 1 - Auto.
+    int gainMode{1};
+    /// Gain value in case manual gain mode. Value: 0(min) - 65535(max).
+    int gain{0};
+    /// Exposure mode. Depends on implementation. Default: 0 - Manual, 1 - Auto.
+    int exposureMode{1};
+    /// Exposure value in case manual exposure mode. Value: 0(min) - 65535(max).
+    int exposure{1};
+    /// Focus mode. Depends on implementation. Default: 0 - Manual, 1 - Auto.
+    int focusMode{1};
+    /// Focus position. Value: 0(full near) - 65535(full far).
+    int focusPos{0};
+    /// Cycle processing time microsecconds.
+    int cycleTimeMks{0};
+    /// FPS. 0 - will be set automatically.
+    float fps{0};
+    /// Open flag.
+    bool isOpen{false};
+
+    JSON_READABLE(VSourceParams,
+                  logLevel,
+                  source,
+                  fourcc,
+                  width,
+                  height,
+                  gainMode,
+                  gain,
+                  exposureMode,
+                  exposure,
+                  focusMode,
+                  focusPos,
+                  fps);
+
+    /**
+     * @brief operator =
+     * @param src Source object.
+     * @return VSourceParams obect.
+     */
+    VSourceParams& operator= (const VSourceParams& src);
+
+    /**
+     * @brief Encode params. The method doesn't encode params:
+     * logLevel, source and fourcc.
+     * @param data Pointer to data buffer.
+     * @param size Size of data.
+     */
+    void encode(uint8_t* data, int& size);
+
+    /**
+     * @brief Decode params. The method doesn't decode params:
+     * logLevel, source and fourcc.
+     * @param data Pointer to data.
+     * @return TRUE is params decoded or FALSE if not.
+     */
+    bool decode(uint8_t* data, int size);
+};
+
+
+
+/**
+ * @brief Enum of video source params.
+ */
+enum class VSourceParam
+{
+    /// [read/write] Log level:
+    /// 0-Disable, 1-Console, 2-File, 3-Console and file.
+    LOG_LEVEL = 1,
+    /// [read/write] Frame width.
+    WIDTH,
+    /// [read/write] Frame height.
+    HEIGHT,
+    /// [read/write] Gain mode. Depends on implementation.
+    /// Default: 0 - Manual, 1 - Auto.
+    GAIN_MODE,
+    /// [read/write] Gain value in case manual gain mode.
+    /// Value: 0(min) - 65535(max).
+    GAIN,
+    /// [read/write] Exposure mode. Depends on implementation.
+    /// Default: 0 - Manual, 1 - Auto.
+    EXPOSURE_MODE,
+    /// [read/write] Exposure value in case manual exposure mode.
+    /// Value: 0(min) - 65535(max).
+    EXPOSURE,
+    /// [read/write] Focus mode. Depends on implementation.
+    /// Default: 0 - Manual, 1 - Auto.
+    FOCUS_MODE,
+    /// [read/write] Focus position.
+    /// Value: 0(full near) - 65535(full far).
+    FOCUS_POS,
+    /// [read only] Cycle processing time microsecconds.
+    CYCLE_TIME_MKS,
+    /// [read/write]  FPS. 0 - will be set automatically.
+    FPS,
+    /// Open flag. 0 - not open, 1 - open.
+    IS_OPEN
+};
+
+
+
+/**
+ * @brief Video source commands.
+ */
+enum class VSourceCommand
+{
+    /// Restart.
+    RESTART = 1,
+    /// Apply settings.
+    APPLY_PARAMS
+};
+
+
+
+/**
+ * @brief Video source interface class.
+ */
+class VSource
 {
 public:
 
     /**
-     * @brief Get string of current version of library.
+     * @brief Get string of current library version.
      * @return String of current library version.
      */
     static std::string getVersion();
 
     /**
-     * @brief Class constructor.
+     * @brief Open video source. All params will be set by default.
+     * @param initString Init string. Format depends on implementation.
+     * Default format: <video device or ID>;<width>;<height>;<fourcc>
+     * @return TRUE if the video source open or FALSE if not.
      */
-    VideoSourceV4L2();
+    virtual bool openVSource(std::string& initString) = 0;
 
     /**
-     * @brief Class destructor.
+     * @brief Init video source. All params will be set according to structure.
+     * @param params Video source parameters structure.
+     * @return TRUE if the video source init or FALSE if not.
      */
-    ~VideoSourceV4L2();
+    virtual bool initVSource(VSourceParams& params) = 0;
 
     /**
-     * @brief Open video source.
-     * @param initString Initialization string. Init string can be:
-     * 1. <path or camera num>;<width or -1>;<height or -1>;<FOURCC>
-     * 2. <path or camera num>
-     * <path> can be path to file or rtsp/rtp stream.
-     * @return TRUE if the video source open or FALSE.
+     * @brief Get open status.
+     * @return TRUE if video source open or FALSE if not.
      */
-    bool open(std::string& initString);
+    virtual bool isVSourceOpen() = 0;
 
     /**
-     * @brief Get connection status.
-     * @return TRUE if video source open or FALSE.
+     * @brief Close video source.
      */
-    bool isOpen();
+    virtual void closeVSource() = 0;
 
     /**
      * @brief Get new video frame.
@@ -59,107 +182,38 @@ public:
      * timeoutMs == -1 - Method will wait endlessly until new data arrive.
      * timeoutMs == 0  - Method will only check if new data exist.
      * timeoutMs > 0   - Method will wait new data specified time.
-     * @return TRUE if new data exist and copied or FALSE.
+     * @return TRUE if new data exist and copied or FALSE if not.
      */
-    bool getFrame(Frame& frame, int32_t timeoutMsec = 0);
-
-    /**
-     * @brief Close video source.
-     */
-    void close();
+    virtual bool getFrame(Frame& frame, int32_t timeoutMsec = 0) = 0;
 
     /**
      * @brief Set video source param.
-     * @param id Parameter ID according to camera specification.
+     * @param id Parameter ID.
      * @param value Parameter value to set.
      * @return TRUE if property was set of FALSE.
      */
-    bool setParam(VideoSourceParam id, float value);
+    virtual bool setParam(VSourceParam id, float value) = 0;
 
     /**
      * @brief Get video source parameter value.
      * @param id Parameter ID according to camera specification.
      * @return Parameter value or -1.
      */
-    float getParam(VideoSourceParam id);
+    virtual float getParam(VSourceParam id) = 0;
+
+    /**
+     * @brief Get video source params structure.
+     * @return Video source parameters structure.
+     */
+    virtual VSourceParams getParams() = 0;
 
     /**
      * @brief Execute command.
-     * @param id Command ID according to specification.
+     * @param id Command ID .
      * @param arg Command argument.
-     * @return TRUE if the command accepted or FALSE.
+     * @return TRUE if the command accepted or FALSE if not.
      */
-    bool executeCommand(VideoSourceCommand id, float arg = 0);
-
-private:
-
-    /// Video data buffer structure.
-    struct buffer
-    {
-        void *start;
-        size_t length;
-    };
-
-    /// File descriptor.
-    int m_fd{-1};
-    /// Flag of open video source.
-    std::atomic<bool> m_isOpen{false};
-    /// Read video thread.
-    std::thread m_readThread;
-    /// Frame ID.
-    uint32_t m_frameId{0};
-    /// Video data buffers.
-    struct buffer m_buffers[256];
-    /// Number of buffers.
-    int m_numBuffers{0};
-    /// Frame width.
-    int m_width{0};
-    /// Frame height.
-    int m_height{0};
-    /// Pixel format.
-    ValidFourccCodes m_fourcc{ValidFourccCodes::BGR24};
-    /// Device name.
-    std::string m_name{""};
-    /// Print debug info flag.
-    std::atomic<bool> m_printDebugInfo{false};
-
-
-    /**
-     * @brief Split string by symbol.
-     * @param str String.
-     * @param symbol Symbol.
-     * @return Vector of strings.
-     */
-    std::vector<std::string> splitString(std::string& str, char symbol);
-
-    /**
-     * @brief Init device.
-     * @param width Frame width.
-     * @param height Frame height.
-     * @param fourcc FOURCC code.
-     * @return TRUE if the device is init or FALSE.
-     */
-    bool initDevice(int width, int height, ValidFourccCodes fourcc);
-
-    /**
-     * @brief xioctl Request for to device.
-     * @param fh Device descriptor.
-     * @param request Type of request.
-     * @param arg Arguments.
-     * @return -1 in case errors or result.
-     */
-    int xioctl(int fh, int request, void *arg);
-
-    /**
-     * @brief Set property value.
-     * @param control Control structure.
-     * @return (-1) - no such control;
-     *         (-2) - control not set;
-     *         (-3) - internal error;
-     *         (0) - OK.
-     */
-    bool xctrl(struct v4l2_control control);
-
+    virtual bool executeCommand(VSourceCommand id, float arg = 0) = 0;
 };
 
 }
