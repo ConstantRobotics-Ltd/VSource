@@ -24,7 +24,7 @@
   - [getFrame method](#getFrame-method)
   - [setParam method](#setParam-method)
   - [getParam method](#getParam-method)
-  - [getParams method](#getParams method)
+  - [getParams method](#getParams-method)
   - [executeCommand method](#executeCommand-method)
 - [Data structures](#Data-structures)
   - [VSourceCommand enum](#VSourceCommand-enum)
