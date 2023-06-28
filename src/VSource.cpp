@@ -39,6 +39,9 @@ VSourceParams &VSourceParams::operator= (const VSourceParams &src)
     cycleTimeMks = src.cycleTimeMks;
     fps = src.fps;
     isOpen = src.isOpen;
+    custom1 = src.custom1;
+    custom2 = src.custom2;
+    custom3 = src.custom3;
 
     return *this;
 }
@@ -54,6 +57,7 @@ void VSourceParams::encode(uint8_t* data, int& size)
     data[pos] = VSOURCE_MINOR_VERSION; pos += 1;
 
     // Encode data.
+    memcpy(&data[pos], &logLevel, 4); pos += 4;
     memcpy(&data[pos], &width, 4); pos += 4;
     memcpy(&data[pos], &height, 4); pos += 4;
     memcpy(&data[pos], &gainMode, 4); pos += 4;
@@ -65,6 +69,9 @@ void VSourceParams::encode(uint8_t* data, int& size)
     memcpy(&data[pos], &cycleTimeMks, 4); pos += 4;
     memcpy(&data[pos], &fps, 4); pos += 4;
     data[pos] = isOpen == true ? 0x01 : 0x00; pos += 1;
+    memcpy(&data[pos], &custom1, 4); pos += 4;
+    memcpy(&data[pos], &custom2, 4); pos += 4;
+    memcpy(&data[pos], &custom3, 4); pos += 4;
     size = pos;
 }
 
@@ -81,6 +88,7 @@ bool VSourceParams::decode(uint8_t* data, int size)
 
     // Decode data.
     int pos = 2;
+    memcpy(&logLevel, &data[pos], 4); pos += 4;
     memcpy(&width, &data[pos], 4); pos += 4;
     memcpy(&height, &data[pos], 4); pos += 4;
     memcpy(&gainMode, &data[pos], 4); pos += 4;
@@ -95,8 +103,11 @@ bool VSourceParams::decode(uint8_t* data, int size)
         isOpen = false;
     else
         isOpen = true;
+    pos += 1;
+    memcpy(&custom1, &data[pos], 4); pos += 4;
+    memcpy(&custom2, &data[pos], 4); pos += 4;
+    memcpy(&custom3, &data[pos], 4);
 
-    logLevel = "";
     source = "";
     fourcc = "";
 

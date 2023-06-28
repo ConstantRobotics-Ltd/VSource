@@ -55,7 +55,7 @@ bool copyTest()
     VSourceParams in;
     in.source = "alsfghljb";
     in.fourcc = "skdfjhvk";
-    in.logLevel = "dsglbjlkfjwjgre";
+    in.logLevel = rand() % 255;
     in.cycleTimeMks = rand() % 255;
     in.exposure = rand() % 255;
     in.exposureMode = rand() % 255;
@@ -67,6 +67,9 @@ bool copyTest()
     in.width = rand() % 255;
     in.height = rand() % 255;
     in.isOpen = true;
+    in.custom1 = rand() % 255;
+    in.custom2 = rand() % 255;
+    in.custom3 = rand() % 255;
 
     // Copy params.
     VSourceParams out = in;
@@ -142,6 +145,21 @@ bool copyTest()
         cout << "in.isOpen" << endl;
         return false;
     }
+    if (in.custom1 != out.custom1)
+    {
+        cout << "in.custom1" << endl;
+        return false;
+    }
+    if (in.custom2 != out.custom2)
+    {
+        cout << "in.custom2" << endl;
+        return false;
+    }
+    if (in.custom3 != out.custom3)
+    {
+        cout << "in.custom3" << endl;
+        return false;
+    }
 
     return true;
 }
@@ -155,7 +173,7 @@ bool encodeDecodeTest()
     VSourceParams in;
     in.source = "alsfghljb";
     in.fourcc = "skdfjhvk";
-    in.logLevel = "dsglbjlkfjwjgre";
+    in.logLevel = rand() % 255;
     in.cycleTimeMks = rand() % 255;
     in.exposure = rand() % 255;
     in.exposureMode = rand() % 255;
@@ -167,6 +185,9 @@ bool encodeDecodeTest()
     in.width = rand() % 255;
     in.height = rand() % 255;
     in.isOpen = true;
+    in.custom1 = rand() % 255;
+    in.custom2 = rand() % 255;
+    in.custom3 = rand() % 255;
 
     // Encode data.
     uint8_t data[1024];
@@ -194,7 +215,7 @@ bool encodeDecodeTest()
         cout << "in.fourcc" << endl;
         return false;
     }
-    if (out.logLevel != "")
+    if (in.logLevel != out.logLevel)
     {
         cout << "in.logLevel" << endl;
         return false;
@@ -252,6 +273,21 @@ bool encodeDecodeTest()
     if (in.isOpen != out.isOpen)
     {
         cout << "in.isOpen" << endl;
+        return false;
+    }
+    if (in.custom1 != out.custom1)
+    {
+        cout << "in.custom1" << endl;
+        return false;
+    }
+    if (in.custom2 != out.custom2)
+    {
+        cout << "in.custom2" << endl;
+        return false;
+    }
+    if (in.custom3 != out.custom3)
+    {
+        cout << "in.custom3" << endl;
         return false;
     }
 

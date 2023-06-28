@@ -6,9 +6,11 @@
 
 # **VSource interface C++ library**
 
-**v1.0.0**
+**v1.1.0**
 
 ------
+
+
 
 # Table of contents
 
@@ -30,20 +32,29 @@
   - [VSourceCommand enum](#VSourceCommand-enum)
   - [VSourceParam enum](#VSourceParam-enum)
   - [VSourceParams class](#VSourceParams-class)
-  - [Encode (serialize) video source params](#Encode-(serialize)-video-source-params)
-  - [Decode (deserialize) video source params](#Decode-(deserialize)-video-source-params)
+  - [Encode video source params](#Encode-video-source-params)
+  - [Decode video source params](#Decode-video-source-params)
+- [Build and connect to your project](#Build-and-connect-to-your-project)
+
+
 
 # Overview
 
-**VSource** C++ library provides standard interface as well defines data structures and rules for different video source classes (video capture classes). **VSource** interface class doesn't do anything, just provides interface. Also **VSource** class provides data structures for video source parameters. Different video source classes inherit form **VSource** C++ class to provide standard control interface. **VSource.h** file contains list of data structures (**VSourceParams** class, **VSourceCommand** enum and **VSourceParam** enum) and **VSource** class declaration. **VSourceParams** class contains video source params and includes methods to encode and decode video source params.  **VSourceCommands** enum contains IDs of commands supported by **VSource** class. **VSourceParam** enum contains IDs of params supported by **VSource** class. All video sources should include params and commands listed in **VSource.h** file. VSource class dependency:<br/>- **Frame** class which describes video frame structure and pixel formats.<br/>- **ConfigReader** class which provides method to work with JSON structures (read/write).
+**VSource** C++ library provides standard interface as well defines data structures and rules for different video source classes (video capture classes). **VSource** interface class doesn't do anything, just provides interface. Also **VSource** class provides data structures for video source parameters. Different video source classes inherit interface form **VSource** C++ class. **VSource.h** file contains data structures **VSourceParams** class, **VSourceCommand** enum, **VSourceParam** enum and includes **VSource** class declaration. **VSourceParams** class contains video source params and includes methods to encode and decode video source params.  **VSourceCommands** enum contains IDs of commands supported by **VSource** class. **VSourceParam** enum contains IDs of params supported by **VSource** class. All video sources should include params and commands listed in **VSource.h** file. VSource class dependency:<br/>- [**Frame**](https://github.com/ConstantRobotics-Ltd/Frame) class which describes video frame structure and pixel formats.<br/>- [**ConfigReader**](https://github.com/ConstantRobotics-Ltd/ConfigReader) class which provides methods to work with JSON structures (read/write).
+
+
 
 # Versions
 
 **Table 1** - Library versions.
 
-| Version | Release date | What's new    |
-| ------- | ------------ | ------------- |
-| 1.0.0   | 13.06.2023   | First version |
+| Version | Release date | What's new                                            |
+| ------- | ------------ | ----------------------------------------------------- |
+| 1.0.0   | 13.06.2023   | First version                                         |
+| 1.0.2   | 20.06.2023   | - Fixed bugs.<br />- Documentation updated.           |
+| 1.1.0   | 29.06.2023   | - Added new parameters.<br />- Documentation updated. |
+
+
 
 # Video source interface class description
 
@@ -67,7 +78,6 @@ public:
      * @return String of current library version.
      */
     static std::string getVersion();
-
     /**
      * @brief Open video source. All params will be set by default.
      * @param initString Init string. Format depends on implementation.
@@ -75,25 +85,21 @@ public:
      * @return TRUE if the video source open or FALSE if not.
      */
     virtual bool openVSource(std::string& initString) = 0;
-
     /**
      * @brief Init video source. All params will be set according to structure.
      * @param params Video source parameters structure.
      * @return TRUE if the video source init or FALSE if not.
      */
     virtual bool initVSource(VSourceParams& params) = 0;
-
     /**
      * @brief Get open status.
      * @return TRUE if video source open or FALSE if not.
      */
     virtual bool isVSourceOpen() = 0;
-
     /**
      * @brief Close video source.
      */
     virtual void closeVSource() = 0;
-
     /**
      * @brief Get new video frame.
      * @param frame Frame object to copy new data.
@@ -104,7 +110,6 @@ public:
      * @return TRUE if new data exists and copied or FALSE if not.
      */
     virtual bool getFrame(Frame& frame, int32_t timeoutMsec = 0) = 0;
-
     /**
      * @brief Set video source param.
      * @param id Parameter ID.
@@ -112,20 +117,17 @@ public:
      * @return TRUE if property was set of FALSE.
      */
     virtual bool setParam(VSourceParam id, float value) = 0;
-
     /**
      * @brief Get video source parameter value.
      * @param id Parameter ID according to camera specification.
      * @return Parameter value or -1.
      */
     virtual float getParam(VSourceParam id) = 0;
-
     /**
      * @brief Get video source params structure.
      * @return Video source parameters structure.
      */
     virtual VSourceParams getParams() = 0;
-
     /**
      * @brief Execute command.
      * @param id Command ID .
@@ -137,9 +139,11 @@ public:
 }
 ```
 
+
+
 ## getVersion method
 
-**getVersion()** method return string of current version of **VSource** class. Particular video source class can have it's own **getVersion()** method. Method declaration:
+**getVersion()** method returns string of current version of **VSource** class. Particular video source class can have it's own **getVersion()** method. Method declaration:
 
 ```cpp
 static std::string getVersion();
@@ -151,9 +155,19 @@ Method can be used without **VSource** class instance:
 std::cout << "VSource class version: " << VSource::getVersion() << std::endl;
 ```
 
+Console output:
+
+```bash
+VSource class version: 1.1.0
+```
+
+Console output:
+
+
+
 ## openVSource method
 
-**openVSource(...)** method initialized video source. Instead of **openVSource(...)** method user can call **initVSource(...)**. Method declaration:
+**openVSource(...)** method initializes video source. Instead of **openVSource(...)** method user can call **initVSource(...)**. Method declaration:
 
 ```cpp
 virtual bool openVSource(std::string& initString) = 0;
@@ -161,9 +175,11 @@ virtual bool openVSource(std::string& initString) = 0;
 
 | Parameter  | Value                                                        |
 | ---------- | ------------------------------------------------------------ |
-| initString | Initialization string. Particular video source class can have specific format. Default format: [video device or ID or file];[width];[height];[fourcc]. |
+| initString | Initialization string. Particular video source class can have specific format. Default format: [video device or ID or file];[width];[height];[fourcc]. Example: "/dev/video0;1920;1080;YUYV". |
 
 **Returns:** TRUE if the video source open or FALSE if not.
+
+
 
 ## initVSource method
 
@@ -179,15 +195,19 @@ virtual bool initVSource(VSourceParams& params) = 0;
 
 **Returns:** TRUE if the video source open or FALSE if not.
 
+
+
 ## isVSourceOpen method
 
-**isVSourceOpen()** method returns video source initialization status. Initialization status also included in **VSourceParams** structure structure. Method declaration:
+**isVSourceOpen()** method returns video source initialization status. Initialization status also included in **VSourceParams** structure. Method declaration:
 
 ```cpp
 virtual bool isVSourceOpen() = 0;
 ```
 
-**Returns:** TRUE if the video source open or FALSE if not.
+**Returns:** TRUE if the video source open (initialized) or FALSE if not.
+
+
 
 ## closeVSource method
 
@@ -196,6 +216,8 @@ virtual bool isVSourceOpen() = 0;
 ```cpp
 virtual void closeVSource() = 0;
 ```
+
+
 
 ## getFrame method
 
@@ -207,10 +229,12 @@ virtual bool getFrame(Frame& frame, int32_t timeoutMsec = 0) = 0;
 
 | Parameter   | Value                                                        |
 | ----------- | ------------------------------------------------------------ |
-| frame       | Output video frame (see **Frame** class description). Video source class determines output pixel format. Pixel format can be set in **initVSource(...)** or **openVSource(...)** methods if particular video source supports it. |
-| timeoutMsec | Timeout to wait new frame data:<br/>- timeoutMs == -1 - Method will wait endlessly until new data arrive.<br/>- timeoutMs == 0  - Method will only check if new data exist.<br/>- timeoutMs > 0   - Method will wait new data specified time. |
+| frame       | Output video frame (see [**Frame**](https://github.com/ConstantRobotics-Ltd/Frame) class description). Video source class determines output pixel format. Pixel format can be set in **initVSource(...)** or **openVSource(...)** methods if particular video source supports it. |
+| timeoutMsec | Timeout to wait new frame data:<br/>- timeoutMs == -1 - Method will wait endlessly until new data arrive.<br/>- timeoutMs == 0  - Method will only check if new data exist.<br/>- timeoutMs > 0   - Method will wait new data specified time.<br />**Each video source implementation must provide described behavior.** |
 
 **Returns:** TRUE if new data exists and copied or FALSE if not.
+
+
 
 ## setParam method
 
@@ -227,6 +251,8 @@ virtual bool setParam(VSourceParam id, float value) = 0;
 
 **Returns:** TRUE is the parameter was set or FALSE if not.
 
+
+
 ## getParam method
 
 **getParam(...)** method designed to obtain video source parameter value. Method declaration:
@@ -241,6 +267,8 @@ virtual float getParam(VSourceParam id) = 0;
 
 **Returns:** parameter value or -1 of the parameters doesn't exist in particular video source class.
 
+
+
 ## getParams method
 
 **getParams(...)** method designed to obtain video source params structures. Method declaration:
@@ -249,7 +277,9 @@ virtual float getParam(VSourceParam id) = 0;
 virtual VSourceParams getParams() = 0;
 ```
 
-**Returns:** parameter video source parameters structure.
+**Returns:** video source parameters structure (see **VSourceParams** class description).
+
+
 
 ## executeCommand method
 
@@ -265,9 +295,13 @@ virtual bool executeCommand(VSourceCommand id) = 0;
 
 **Returns:** TRUE is the command was executed or FALSE if not.
 
+
+
 # Data structures
 
 **VSource.h** file defines IDs for parameters (**VSourceParam** enum), IDs for commands (**VSourceCommand** enum) and **VSourceParams** class.
+
+
 
 ## VSourceCommand enum
 
@@ -277,18 +311,17 @@ Enum declaration:
 enum class VSourceCommand
 {
     /// Restart.
-    RESTART = 1,
-    /// Apply settings.
-    APPLY_PARAMS
+    RESTART = 1
 };
 ```
 
 **Table 2** - Video source commands description. Some commands maybe unsupported by particular video source class.
 
-| Command      | Description                                  |
-| ------------ | -------------------------------------------- |
-| RESTART      | Restart video source (close and open again). |
-| APPLY_PARAMS | Apply (Save) parameters.                     |
+| Command | Description                                  |
+| ------- | -------------------------------------------- |
+| RESTART | Restart video source (close and open again). |
+
+
 
 ## VSourceParam enum
 
@@ -298,7 +331,7 @@ Enum declaration:
 enum class VSourceParam
 {
     /// [read/write] Log level:
-    /// 0-Disable, 1-Console, 2-File, 3-Console and file.
+    /// 0 - Disable, 1 - Console, 2 - File, 3 - Console and file.
     LOG_LEVEL = 1,
     /// [read/write] Frame width.
     WIDTH,
@@ -327,7 +360,13 @@ enum class VSourceParam
     /// [read/write]  FPS. 0 - will be set automatically.
     FPS,
     /// Open flag. 0 - not open, 1 - open.
-    IS_OPEN
+    IS_OPEN,
+    /// Custom parameter. Depends on implementation.
+    CUSTOM_1,
+    /// Custom parameter. Depends on implementation.
+    CUSTOM_2,
+    /// Custom parameter. Depends on implementation.
+    CUSTOM_3
 };
 ```
 
@@ -347,17 +386,22 @@ enum class VSourceParam
 | CYCLE_TIME_MKS | read only    | Video capture cycle time. **VSource** class sets this value automatically. |
 | FPS            | read / write | FPS. User can set frame FPS before initialization or after. Some video source classes may set FPS automatically. |
 | IS_OPEN        | read only    | Open flag. 0 - not open, 1 - open.                           |
+| CUSTOM_1       | read / write | Custom parameter. Depends on implementation.                 |
+| CUSTOM_2       | read / write | Custom parameter. Depends on implementation.                 |
+| CUSTOM_3       | read / write | Custom parameter. Depends on implementation.                 |
+
+
 
 ## **VSourceParams class**
 
-**VSourceParams** class used for video source initialization (**initVSource(...)** method) or to get all actual params (**getParams()** method). Also **VSourceParams** provide structure to write/read params from JSON files (**JSON_READABLE** macro) and provide methos to encode and decode params. Class declaration:
+**VSourceParams** class used for video source initialization (**initVSource(...)** method) or to get all actual params (**getParams()** method). Also **VSourceParams** provide structure to write/read params from JSON files (**JSON_READABLE** macro, see [**ConfigReader**](https://github.com/ConstantRobotics-Ltd/ConfigReader) class description) and provide methos to encode and decode params. Class declaration:
 
 ```cpp
 class VSourceParams
 {
 public:
-    /// Log level: Disable, Console, File, Console and file.
-    std::string logLevel{"Disable"};
+    /// Log level: 0 - Disable, 1 - Console, 2 - File, 3 - Console and file.
+    int logLevel{0};
     /// Video source name.
     std::string source{"/dev/video0"};
     /// FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12.
@@ -384,6 +428,12 @@ public:
     float fps{0};
     /// Open flag.
     bool isOpen{false};
+    /// Custom param 1. Depends on implementation.
+    float custom1{0.0f};
+    /// Custom param 2. Depends on implementation.
+    float custom2{0.0f};
+    /// Custom param 3. Depends on implementation.
+    float custom3{0.0f};
 
     JSON_READABLE(VSourceParams,
                   logLevel,
@@ -397,7 +447,10 @@ public:
                   exposure,
                   focusMode,
                   focusPos,
-                  fps);
+                  fps,
+                  custom1,
+                  custom2,
+                  custom3);
 
     /**
      * @brief operator =
@@ -405,18 +458,16 @@ public:
      * @return VSourceParams obect.
      */
     VSourceParams& operator= (const VSourceParams& src);
-
     /**
      * @brief Encode params. The method doesn't encode params:
-     * logLevel, source and fourcc.
+     * source and fourcc.
      * @param data Pointer to data buffer.
      * @param size Size of data.
      */
     void encode(uint8_t* data, int& size);
-
     /**
      * @brief Decode params. The method doesn't decode params:
-     * logLevel, source and fourcc.
+     * source and fourcc.
      * @param data Pointer to data.
      * @return TRUE is params decoded or FALSE if not.
      */
@@ -428,7 +479,7 @@ public:
 
 | Field        | type   | Description                                                  |
 | ------------ | ------ | ------------------------------------------------------------ |
-| logLevel     | string | Logging mode. Default values:<br/>"Disable" - Disable printing log info.<br/>"File" - Only printing in file.<br/>"Console" - Only printing in terminal.<br/>"Console and file" - File and terminal printing. |
+| logLevel     | int    | Logging mode. Default values:<br/>0 - Disable printing log info.<br/>1 - Only printing in file.<br/>2 - Only printing in terminal.<br/>3 - File and terminal printing. |
 | source       | string | Video device name (depends on OS), video source or file. Format depends on particular video source class. |
 | fourcc       | string | FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12. Value says to video source class which pixel format preferable for output video frame. Particular video source class can ignore this params during initialization. Parameters should be set before initialization. |
 | width        | int    | Frame width. User can set frame width before initialization or after. Some video source classes may set width automatically. |
@@ -442,12 +493,17 @@ public:
 | cycleTimeMks | int    | Video capture cycle time. **VSource** class sets this value automatically. |
 | fps          | float  | FPS. User can set frame FPS before initialization or after. Some video source classes may set FPS automatically. |
 | isOpen       | bool   | Open flag. FLASE - video source not open, TRUE - video source open. |
+| custom1      | float  | Custom parameter. Depends on implementation.                 |
+| custom2      | float  | Custom parameter. Depends on implementation.                 |
+| custom3      | float  | Custom parameter. Depends on implementation.                 |
 
-**None:** *VSourceParams class filelds listed in Table 4 **must** reflect params set/get by methods setParam(...) and getParam(...).* 
+**None:** *VSourceParams class fields listed in Table 4 **must** reflect params set/get by methods setParam(...) and getParam(...).* 
 
-## Encode (serialize) video source params
 
-**VSourceParams** class provides method **encode(...)** to serialize video source params (fields of VSourceParams class, see Table 4). Serialization of video source params necessary in case when you need to send video source params via communication channels. Method doesn't encode fields: **logLevel**, **source** and **fourcc**. Method declaration:
+
+## Encode video source params
+
+**VSourceParams** class provides method **encode(...)** to serialize video source params (fields of VSourceParams class, see Table 4). Serialization of video source params necessary in case when you need to send video source params via communication channels. Method doesn't encode fields: **source** and **fourcc**. Method declaration:
 
 ```cpp
 void encode(uint8_t* data, int& size);
@@ -486,9 +542,11 @@ in.encode(data, size);
 cout << "Encoded data size: " << size << " bytes" << endl;
 ```
 
-## Decode (deserialize) video source params
 
-**VSourceParams** class provides method **decode(...)** to deserialize video source params (fields of VSourceParams class, see Table 4). Deserialization of video source params necessary in case when you need to receive video source params via communication channels. Method doesn't decode fields: **logLevel**, **source** and **fourcc**. Method declaration:
+
+## Decode video source params
+
+**VSourceParams** class provides method **decode(...)** to deserialize video source params (fields of VSourceParams class, see Table 4). Deserialization of video source params necessary in case when you need to receive video source params via communication channels. Method doesn't decode fields: **source** and **fourcc**. Method declaration:
 
 ```cpp
 bool decode(uint8_t* data, int size);
@@ -519,4 +577,114 @@ if (!out.decode(data, size))
 ```
 
 
+
+# Build and connect to your project
+
+Typical commands to build **VSource** library:
+
+```bash
+git clone https://github.com/ConstantRobotics-Ltd/VSource.git
+cd VSource
+git submodule update --init --recursive
+mkdir build
+cd build
+cmake ..
+make
+```
+
+If you want connect **VSource** library to your CMake project as source code you can make follow. For example, if your repository has structure:
+
+```bash
+CMakeLists.txt
+src
+    CMakeList.txt
+    yourLib.h
+    yourLib.cpp
+```
+
+You can add repository **VSource** as submodule by commands:
+
+```bash
+cd <your respository folder>
+git submodule add https://github.com/ConstantRobotics-Ltd/VSource.git 3rdparty/VSource
+git submodule update --init --recursive
+```
+
+In you repository folder will be created folder **3rdparty/VSource** which contains files of **VSource** repository with subrepositories **Frame** and **ConfigReader**. New structure of your repository:
+
+```bash
+CMakeLists.txt
+src
+    CMakeList.txt
+    yourLib.h
+    yourLib.cpp
+3rdparty
+    VSource
+```
+
+Create CMakeLists.txt file in **3rdparty** folder. CMakeLists.txt should contain:
+
+```cmake
+cmake_minimum_required(VERSION 3.13)
+
+################################################################################
+## 3RD-PARTY
+## dependencies for the project
+################################################################################
+project(3rdparty LANGUAGES CXX)
+
+################################################################################
+## SETTINGS
+## basic 3rd-party settings before use
+################################################################################
+# To inherit the top-level architecture when the project is used as a submodule.
+SET(PARENT ${PARENT}_YOUR_PROJECT_3RDPARTY)
+# Disable self-overwriting of parameters inside included subdirectories.
+SET(${PARENT}_SUBMODULE_CACHE_OVERWRITE OFF CACHE BOOL "" FORCE)
+
+################################################################################
+## CONFIGURATION
+## 3rd-party submodules configuration
+################################################################################
+SET(${PARENT}_SUBMODULE_VSOURCE                         ON  CACHE BOOL "" FORCE)
+if (${PARENT}_SUBMODULE_VSOURCE)
+    SET(${PARENT}_VSOURCE                               ON  CACHE BOOL "" FORCE)
+    SET(${PARENT}_VSOURCE_PARAMS_TEST                   OFF CACHE BOOL "" FORCE)
+endif()
+
+################################################################################
+## INCLUDING SUBDIRECTORIES
+## Adding subdirectories according to the 3rd-party configuration
+################################################################################
+if (${PARENT}_SUBMODULE_VSOURCE)
+    add_subdirectory(VSource)
+endif()
+```
+
+File **3rdparty/CMakeLists.txt** adds folder **VSource** to your project and excludes test application (VSource class test applications) from compiling. Your repository new structure will be:
+
+```bash
+CMakeLists.txt
+src
+    CMakeList.txt
+    yourLib.h
+    yourLib.cpp
+3rdparty
+    CMakeLists.txt
+    VSource
+```
+
+Next you need include folder 3rdparty in main **CMakeLists.txt** file of your repository. Add string at the end of your main **CMakeLists.txt**:
+
+```cmake
+add_subdirectory(3rdparty)
+```
+
+Next you have to include VSource library in your **src/CMakeLists.txt** file:
+
+```cmake
+target_link_libraries(${PROJECT_NAME} VSource)
+```
+
+Done!
 

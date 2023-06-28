@@ -14,8 +14,8 @@ namespace video
 class VSourceParams
 {
 public:
-    /// Log level: Disable, Console, File, Console and file.
-    std::string logLevel{"Disable"};
+    /// Log level: 0 - Disable, 1 - Console, 2 - File, 3 - Console and file.
+    int logLevel{0};
     /// Video source name.
     std::string source{"/dev/video0"};
     /// FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12.
@@ -42,6 +42,12 @@ public:
     float fps{0};
     /// Open flag.
     bool isOpen{false};
+    /// Custom param 1. Depends on implementation.
+    float custom1{0.0f};
+    /// Custom param 2. Depends on implementation.
+    float custom2{0.0f};
+    /// Custom param 3. Depends on implementation.
+    float custom3{0.0f};
 
     JSON_READABLE(VSourceParams,
                   logLevel,
@@ -55,7 +61,10 @@ public:
                   exposure,
                   focusMode,
                   focusPos,
-                  fps);
+                  fps,
+                  custom1,
+                  custom2,
+                  custom3);
 
     /**
      * @brief operator =
@@ -66,7 +75,7 @@ public:
 
     /**
      * @brief Encode params. The method doesn't encode params:
-     * logLevel, source and fourcc.
+     * source and fourcc.
      * @param data Pointer to data buffer.
      * @param size Size of data.
      */
@@ -74,7 +83,7 @@ public:
 
     /**
      * @brief Decode params. The method doesn't decode params:
-     * logLevel, source and fourcc.
+     * source and fourcc.
      * @param data Pointer to data.
      * @return TRUE is params decoded or FALSE if not.
      */
@@ -89,7 +98,7 @@ public:
 enum class VSourceParam
 {
     /// [read/write] Log level:
-    /// 0-Disable, 1-Console, 2-File, 3-Console and file.
+    /// 0 - Disable, 1 - Console, 2 - File, 3 - Console and file.
     LOG_LEVEL = 1,
     /// [read/write] Frame width.
     WIDTH,
@@ -118,7 +127,13 @@ enum class VSourceParam
     /// [read/write]  FPS. 0 - will be set automatically.
     FPS,
     /// Open flag. 0 - not open, 1 - open.
-    IS_OPEN
+    IS_OPEN,
+    /// Custom parameter. Depends on implementation.
+    CUSTOM_1,
+    /// Custom parameter. Depends on implementation.
+    CUSTOM_2,
+    /// Custom parameter. Depends on implementation.
+    CUSTOM_3
 };
 
 
