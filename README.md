@@ -6,7 +6,7 @@
 
 # **VSource interface C++ library**
 
-**v1.1.0**
+**v1.1.1**
 
 ------
 
@@ -53,6 +53,7 @@
 | 1.0.0   | 13.06.2023   | First version                                         |
 | 1.0.2   | 20.06.2023   | - Fixed bugs.<br />- Documentation updated.           |
 | 1.1.0   | 29.06.2023   | - Added new parameters.<br />- Documentation updated. |
+| 1.1.1   | 29.06.2023   | - Added license.<br />- Repository made public.       |
 
 
 
