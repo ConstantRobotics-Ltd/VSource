@@ -14,40 +14,57 @@ namespace video
 class VSourceParams
 {
 public:
-    /// Logging mode. Values: 0 - Disable, 1 - Only file, 2 - Only terminal,
-    /// 3 - File and terminal.
+    /// Logging mode. Values: 0 - Disable, 1 - Only file,
+    /// 2 - Only terminal, 3 - File and terminal.
     int logLevel{0};
-    /// Video source name.
+    /// Initialization string. Format depends on implementation but it is
+    /// recommended to keep default format:
+    /// [video device or ID or file];[width];[height];[fourcc].
+    /// Example: "/dev/video0;1920;1080;YUYV".
     std::string initString{"/dev/video0"};
     /// FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12.
+    /// Value says to video source class which pixel format preferable for
+    /// output video frame. Particular video source class can ignore this params
+    /// during initialization. Parameters should be set before initialization.
     std::string fourcc{"YUYV"};
-    /// Frame width. 0 - will be set automatically.
+    /// Frame width. User can set frame width before initialization
+    /// or after. Some video source classes may set width automatically.
     int width{1920};
-    /// Frame height. 0 - will be set automatically.
+    /// Frame height. User can set frame height before
+    /// initialization or after. Some video source classes may set height
+    /// automatically.
     int height{1080};
-    /// Gain mode. Depends on implementation. Default: 0 - Manual, 1 - Auto.
+    /// Gain mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     int gainMode{1};
-    /// Gain value in case manual gain mode. Value: 0(min) - 65535(max).
+    /// Gain value. Value: 0(min for particular video source class)
+    /// - 65535(max for particular video source class).
     int gain{0};
-    /// Exposure mode. Depends on implementation. Default: 0 - Manual, 1 - Auto.
+    /// Exposure mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     int exposureMode{1};
-    /// Exposure value in case manual exposure mode. Value: 0(min) - 65535(max).
+    /// Exposure value. Value: 0(min for particular video source
+    /// class) - 65535(max for particular video source class).
     int exposure{1};
-    /// Focus mode. Depends on implementation. Default: 0 - Manual, 1 - Auto.
+    /// Focus mode. Focus mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     int focusMode{1};
     /// Focus position. Value: 0(full near) - 65535(full far).
     int focusPos{0};
-    /// Cycle processing time microsecconds.
+    /// Video capture cycle time. **VSource** class sets this value
+    /// automatically. This parameter means time interval between two captured
+    /// video frame.
     int cycleTimeMks{0};
-    /// FPS. 0 - will be set automatically.
+    /// FPS. User can set frame FPS before initialization or after.
+    /// Some video source classes may set FPS automatically.
     float fps{0};
-    /// Open flag.
+    /// Open flag. 0 - not open, 1 - open.
     bool isOpen{false};
-    /// Custom param 1. Depends on implementation.
+    /// Custom parameter. Depends on implementation.
     float custom1{0.0f};
-    /// Custom param 2. Depends on implementation.
+    /// Custom parameter. Depends on implementation.
     float custom2{0.0f};
-    /// Custom param 3. Depends on implementation.
+    /// Custom parameter. Depends on implementation.
     float custom3{0.0f};
 
     JSON_READABLE(VSourceParams,
