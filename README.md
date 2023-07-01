@@ -6,7 +6,7 @@
 
 # **VSource interface C++ library**
 
-**v1.1.1**
+**v1.2.0**
 
 ------
 
@@ -17,7 +17,7 @@
 - [Overview](#Overview)
 - [Versions](#Versions)
 - [Video source interface class description](#Video-source-interface-class-description)
-  - [Class declaration](#Class-declaration)
+  - [VSource class declaration](#VSource-class-declaration)
   - [getVersion method](#getVersion-method)
   - [openVSource method](#openVSource-method)
   - [initVSource method](#initVSource-method)
@@ -28,12 +28,17 @@
   - [getParam method](#getParam-method)
   - [getParams method](#getParams-method)
   - [executeCommand method](#executeCommand-method)
+  - [encodeSetParamCommand method](#encodeSetParamCommand-method)
+  - [encodeCommand method](#encodeCommand-method)
+  - [decodeCommand method](#decodeCommand-method)
 - [Data structures](#Data-structures)
   - [VSourceCommand enum](#VSourceCommand-enum)
   - [VSourceParam enum](#VSourceParam-enum)
-  - [VSourceParams class](#VSourceParams-class)
+- [VSourceParams class description](#VSourceParams-class-description)
+  - [VSourceParams class declaration](#VSourceParams-class-declaration)
   - [Encode video source params](#Encode-video-source-params)
   - [Decode video source params](#Decode-video-source-params)
+  - [Read params from JSON file and write to JSON file](#Read-params-from-JSON-file-and-write-to-JSON-file)
 - [Build and connect to your project](#Build-and-connect-to-your-project)
 
 
@@ -48,29 +53,23 @@
 
 **Table 1** - Library versions.
 
-| Version | Release date | What's new                                            |
-| ------- | ------------ | ----------------------------------------------------- |
-| 1.0.0   | 13.06.2023   | First version                                         |
-| 1.0.2   | 20.06.2023   | - Fixed bugs.<br />- Documentation updated.           |
-| 1.1.0   | 29.06.2023   | - Added new parameters.<br />- Documentation updated. |
-| 1.1.1   | 29.06.2023   | - Added license.<br />- Repository made public.       |
+| Version | Release date | What's new                                                   |
+| ------- | ------------ | ------------------------------------------------------------ |
+| 1.0.0   | 13.06.2023   | First version                                                |
+| 1.0.2   | 20.06.2023   | - Fixed bugs.<br />- Documentation updated.                  |
+| 1.1.0   | 29.06.2023   | - Added new parameters.<br />- Documentation updated.        |
+| 1.1.1   | 29.06.2023   | - Added license.<br />- Repository made public.              |
+| 1.2.0   | 01.07.2023   | - Added new methods to encode/decode commands.<br />- Tests updated.<br />- Documentation updated. |
 
 
 
 # Video source interface class description
 
-## Class declaration
+## VSource class declaration
 
 **VSource** interface class declared in **VSource.h** file. Class declaration:
 
 ```cpp
-namespace cr
-{
-namespace video
-{
-/**
- * @brief Video source interface class.
- */
 class VSource
 {
 public:
@@ -105,10 +104,10 @@ public:
      * @brief Get new video frame.
      * @param frame Frame object to copy new data.
      * @param timeoutMsec Timeout to wait new frame data:
-     * timeoutMs == -1 - Method will wait endlessly until new data arrive.
-     * timeoutMs == 0  - Method will only check if new data exist.
-     * timeoutMs > 0   - Method will wait new data specified time.
-     * @return TRUE if new data exists and copied or FALSE if not.
+     * timeoutMsec == -1 - Method will wait endlessly until new data arrive.
+     * timeoutMsec == 0  - Method will only check if new data exist.
+     * timeoutMsec > 0   - Method will wait new data specified time.
+     * @return TRUE if new video frame exist and copied or FALSE if not.
      */
     virtual bool getFrame(Frame& frame, int32_t timeoutMsec = 0) = 0;
     /**
@@ -119,8 +118,8 @@ public:
      */
     virtual bool setParam(VSourceParam id, float value) = 0;
     /**
-     * @brief Get video source parameter value.
-     * @param id Parameter ID according to camera specification.
+     * @brief Get video source param value.
+     * @param id Parameter ID.
      * @return Parameter value or -1.
      */
     virtual float getParam(VSourceParam id) = 0;
@@ -131,13 +130,42 @@ public:
     virtual VSourceParams getParams() = 0;
     /**
      * @brief Execute command.
-     * @param id Command ID .
+     * @param id Command ID.
      * @return TRUE if the command accepted or FALSE if not.
      */
     virtual bool executeCommand(VSourceCommand id) = 0;
+    /**
+     * @brief Encode set param command.
+     * @param data Pointer to data buffer. Must have size >= 11.
+     * @param size Size of encoded data.
+     * @param id Parameter id.
+     * @param value Parameter value.
+     */
+    static void encodeSetParamCommand(
+            uint8_t* data, int& size, VSourceParam id, float value);
+    /**
+     * @brief Encode command.
+     * @param data Pointer to data buffer. Must have size >= 11.
+     * @param size Size of encoded data.
+     * @param id Command ID.
+     */
+    static void encodeCommand(
+            uint8_t* data, int& size, VSourceCommand id);
+    /**
+     * @brief Decode command.
+     * @param data Pointer to command data.
+     * @param size Size of data.
+     * @param paramId Output command ID.
+     * @param commandId Output command ID.
+     * @param value Param or command value.
+     * @return 0 - command decoded, 1 - set param command decoded, -1 - error.
+     */
+    static int decodeCommand(uint8_t* data,
+                             int size,
+                             VSourceParam& paramId,
+                             VSourceCommand& commandId,
+                             float& value);
 };
-}
-}
 ```
 
 
@@ -162,8 +190,6 @@ Console output:
 VSource class version: 1.1.0
 ```
 
-Console output:
-
 
 
 ## openVSource method
@@ -176,7 +202,7 @@ virtual bool openVSource(std::string& initString) = 0;
 
 | Parameter  | Value                                                        |
 | ---------- | ------------------------------------------------------------ |
-| initString | Initialization string. Particular video source class can have specific format. Default format: [video device or ID or file];[width];[height];[fourcc]. Example: "/dev/video0;1920;1080;YUYV". |
+| initString | Initialization string. Format depends on implementation but it is recommended to keep default format: [video device or ID or file];[width];[height];[fourcc]. Example: "/dev/video0;1920;1080;YUYV". |
 
 **Returns:** TRUE if the video source open or FALSE if not.
 
@@ -184,7 +210,7 @@ virtual bool openVSource(std::string& initString) = 0;
 
 ## initVSource method
 
-**initVSource(...)** method initialized video source. Instead of **initVSource(...)** method user can call **openVSource(...)**. Method declaration:
+**initVSource(...)** method initialized video source by set of parameters. Instead of **initVSource(...)** method user can call **openVSource(...)**. Method declaration:
 
 ```cpp
 virtual bool initVSource(VSourceParams& params) = 0;
@@ -192,15 +218,15 @@ virtual bool initVSource(VSourceParams& params) = 0;
 
 | Parameter | Value                                                        |
 | --------- | ------------------------------------------------------------ |
-| params    | VSourceParams structure (see **VSourceParams** description). The video source should set parameters according to params structure. Particular video source can support not all parameters listed in VSourceParams structure. |
+| params    | VSourceParams structure (see **VSourceParams** class description). The video source should set parameters according to params structure. Particular video source can support not all parameters listed in VSourceParams class. |
 
-**Returns:** TRUE if the video source open or FALSE if not.
+**Returns:** TRUE if the video source initialized or FALSE if not.
 
 
 
 ## isVSourceOpen method
 
-**isVSourceOpen()** method returns video source initialization status. Initialization status also included in **VSourceParams** structure. Method declaration:
+**isVSourceOpen()** method returns video source initialization status. Initialization status also included in **VSourceParams** class. Method declaration:
 
 ```cpp
 virtual bool isVSourceOpen() = 0;
@@ -222,7 +248,7 @@ virtual void closeVSource() = 0;
 
 ## getFrame method
 
-**getFrame(...)** method intended to get input video frame. Method declaration:
+**getFrame(...)** method intended to get input video frame. Video source should support auto reinitialization in case connection loss. Method declaration:
 
 ```cpp
 virtual bool getFrame(Frame& frame, int32_t timeoutMsec = 0) = 0;
@@ -298,9 +324,114 @@ virtual bool executeCommand(VSourceCommand id) = 0;
 
 
 
+## encodeSetParamCommand method
+
+**encodeSetParamCommand(...)** static method designed to encode command to change any parameter for remote video source. To control video source remotely, the developer has to design his own protocol and according to it encode the command and deliver it over the communication channel. To simplify this, the **VSource** class contains static methods for encoding the control command. The **VSource** class provides two types of commands: a parameter change command (SET_PARAM) and an action command (COMMAND). **encodeSetParamCommand(...)** designed to encode SET_PARAM command. Method declaration:
+
+```cpp
+static void encodeSetParamCommand(uint8_t* data, int& size, VSourceParam id, float value);
+```
+
+| Parameter | Description                                                  |
+| --------- | ------------------------------------------------------------ |
+| data      | Pointer to data buffer for encoded command. Must have size >= 11. |
+| size      | Size of encoded data. Will be 11 bytes.                      |
+| id        | Parameter ID according to **VSourceParam** enum.             |
+| value     | Parameter value.                                             |
+
+**SET_PARAM** command format:
+
+| Byte | Value | Description                                        |
+| ---- | ----- | -------------------------------------------------- |
+| 0    | 0x01  | SET_PARAM command header value.                    |
+| 1    | 0x01  | Major version of VSource class.                    |
+| 2    | 0x02  | Minor version of VSource class.                    |
+| 3    | id    | Parameter ID **int32_t** in Little-endian format.  |
+| 4    | id    | Parameter ID **int32_t** in Little-endian format.  |
+| 5    | id    | Parameter ID **int32_t** in Little-endian format.  |
+| 6    | id    | Parameter ID **int32_t** in Little-endian format.  |
+| 7    | value | Parameter value **float** in Little-endian format. |
+| 8    | value | Parameter value **float** in Little-endian format. |
+| 9    | value | Parameter value **float** in Little-endian format. |
+| 10   | value | Parameter value **float** in Little-endian format. |
+
+**encodeSetParamCommand(...)** is static and used without **VSource** class instance. This method used on client side (control system). Command encoding example:
+
+```cpp
+// Buffer for encoded data.
+uint8_t data[11];
+// Size of encoded data.
+int size = 0;
+// Random parameter value.
+float outValue = (float)(rand() % 20);
+// Encode command.
+VSurce::encodeSetParamCommand(data, size, VSourceParam::EXPOSURE, outValue);
+```
+
+
+
+## encodeCommand method
+
+**encodeCommand(...)** static method designed to encode command for remote video source. To control a video source remotely, the developer has to design his own protocol and according to it encode the command and deliver it over the communication channel. To simplify this, the **VSource** class contains static methods for encoding the control command. The **VSource** class provides two types of commands: a parameter change command (SET_PARAM) and an action command (COMMAND). **encodeCommand(...)** designed to encode COMMAND (action command). Method declaration:
+
+```cpp
+static void encodeCommand(uint8_t* data, int& size, VSourceCommand id);
+```
+
+| Parameter | Description                                                  |
+| --------- | ------------------------------------------------------------ |
+| data      | Pointer to data buffer for encoded command. Must have size >= 11. |
+| size      | Size of encoded data. Will be 11 bytes.                      |
+| id        | Command ID according to **VSourceParam** enum.               |
+
+**COMMAND** format:
+
+| Byte | Value | Description                                     |
+| ---- | ----- | ----------------------------------------------- |
+| 0    | 0x00  | COMMAND header value.                           |
+| 1    | 0x02  | Major version of VSource class.                 |
+| 2    | 0x00  | Minor version of VSource class.                 |
+| 3    | id    | Command ID **int32_t** in Little-endian format. |
+| 4    | id    | Command ID **int32_t** in Little-endian format. |
+| 5    | id    | Command ID **int32_t** in Little-endian format. |
+| 6    | id    | Command ID **int32_t** in Little-endian format. |
+
+**encodeCommand(...)** is static and used without **VSource** class instance. This method used on client side (control system). Command encoding example:
+
+```cpp
+// Buffer for encoded data.
+uint8_t data[11];
+// Size of encoded data.
+int size = 0;
+// Encode command.
+VSource::encodeCommand(data, size, VSourceCommand::RESTART);
+```
+
+
+
+## decodeCommand method
+
+**decodeCommand(...)** static method designed to decode command on video source side (edge device). Method declaration:
+
+```cpp
+static int decodeCommand(uint8_t* data, int size, VSourceParam& paramId, VSourceCommand& commandId, float& value);
+```
+
+| Parameter | Description                                                  |
+| --------- | ------------------------------------------------------------ |
+| data      | Pointer to input command.                                    |
+| size      | Size of command. Should be 11 bytes.                         |
+| paramId   | Parameter ID according to **VSourceParam** enum. After decoding SET_PARAM command the method will return parameter ID. |
+| commandId | Command ID according to **VSourceCommand** enum. After decoding COMMAND the method will return command ID. |
+| value     | Parameter value (after decoding SET_PARAM command).          |
+
+**Returns:** **0** - in case decoding COMMAND, **1** - in case decoding SET_PARAM command or **-1** in case errors.
+
+
+
 # Data structures
 
-**VSource.h** file defines IDs for parameters (**VSourceParam** enum), IDs for commands (**VSourceCommand** enum) and **VSourceParams** class.
+**VSource.h** file defines IDs for parameters (**VSourceParam** enum) and IDs for commands (**VSourceCommand** enum).
 
 
 
@@ -331,42 +462,47 @@ Enum declaration:
 ```cpp
 enum class VSourceParam
 {
-    /// [read/write] Log level:
-    /// 0 - Disable, 1 - Console, 2 - File, 3 - Console and file.
+    /// [read/write] Logging mode. Values: 0 - Disable, 1 - Only file,
+    /// 2 - Only terminal, 3 - File and terminal.
     LOG_LEVEL = 1,
-    /// [read/write] Frame width.
+    /// [read/write] Frame width. User can set frame width before initialization
+    /// or after. Some video source classes may set width automatically.
     WIDTH,
-    /// [read/write] Frame height.
+    /// [read/write] Frame height. User can set frame height before
+    /// initialization or after. Some video source classes may set height
+    /// automatically.
     HEIGHT,
-    /// [read/write] Gain mode. Depends on implementation.
-    /// Default: 0 - Manual, 1 - Auto.
+    /// [read/write] Gain mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     GAIN_MODE,
-    /// [read/write] Gain value in case manual gain mode.
-    /// Value: 0(min) - 65535(max).
+    /// [read/write] Gain value. Value: 0(min for particular video source class)
+    /// - 65535(max for particular video source class).
     GAIN,
-    /// [read/write] Exposure mode. Depends on implementation.
-    /// Default: 0 - Manual, 1 - Auto.
+    /// [read/write] Exposure mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     EXPOSURE_MODE,
-    /// [read/write] Exposure value in case manual exposure mode.
-    /// Value: 0(min) - 65535(max).
+    /// [read/write] Exposure value. Value: 0(min for particular video source
+    /// class) - 65535(max for particular video source class).
     EXPOSURE,
-    /// [read/write] Focus mode. Depends on implementation.
-    /// Default: 0 - Manual, 1 - Auto.
+    /// [read/write] Focus mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     FOCUS_MODE,
-    /// [read/write] Focus position.
-    /// Value: 0(full near) - 65535(full far).
+    /// [read/write] Focus position. Value: 0(full near) - 65535(full far).
     FOCUS_POS,
-    /// [read only] Cycle processing time microsecconds.
+    /// [read only] Video capture cycle time. **VSource** class sets this value
+    /// automatically. This parameter means time interval between two captured
+    /// video frame.
     CYCLE_TIME_MKS,
-    /// [read/write]  FPS. 0 - will be set automatically.
+    /// [read/write] FPS. User can set frame FPS before initialization or after.
+    /// Some video source classes may set FPS automatically.
     FPS,
-    /// Open flag. 0 - not open, 1 - open.
+    /// [read only] Open flag. 0 - not open, 1 - open.
     IS_OPEN,
-    /// Custom parameter. Depends on implementation.
+    /// [read/write] Custom parameter. Depends on implementation.
     CUSTOM_1,
-    /// Custom parameter. Depends on implementation.
+    /// [read/write] Custom parameter. Depends on implementation.
     CUSTOM_2,
-    /// Custom parameter. Depends on implementation.
+    /// [read/write] Custom parameter. Depends on implementation.
     CUSTOM_3
 };
 ```
@@ -375,16 +511,16 @@ enum class VSourceParam
 
 | Parameter      | Access       | Description                                                  |
 | -------------- | ------------ | ------------------------------------------------------------ |
-| LOG_LEVEL      | read / write | Logging mode. Default values:<br/>0 - Disable.<br/>1 - Only file.<br/>2 - Only terminal.<br/>3 - File and terminal. |
+| LOG_LEVEL      | read / write | Logging mode. Values: 0 - Disable, 1 - Only file, 2 - Only terminal, 3 - File and terminal. |
 | WIDTH          | read / write | Frame width. User can set frame width before initialization or after. Some video source classes may set width automatically. |
 | HEIGHT         | read / write | Frame height. User can set frame height before initialization or after. Some video source classes may set height automatically. |
-| GAIN_MODE      | read / write | Gain mode. Value depends on implementation. Default values: 0 - Manual control, 1 - Auto. |
+| GAIN_MODE      | read / write | Gain mode. Value depends on implementation but it is recommended to keep default values: 0 - Manual control, 1 - Auto. |
 | GAIN           | read / write | Gain value. Value: 0(min for particular video source class) - 65535(max for particular video source class). |
-| EXPOSURE_MODE  | read / write | Exposure mode. Value depends on implementation. Default values: 0 - Manual control, 1 - Auto. |
+| EXPOSURE_MODE  | read / write | Exposure mode. Value depends on implementation but it is recommended to keep default values: 0 - Manual control, 1 - Auto. |
 | EXPOSURE       | read / write | Exposure value. Value: 0(min for particular video source class) - 65535(max for particular video source class). |
-| FOCUS_MODE     | read / write | Focus mode. Value depends on implementation. Default values: 0 - Manual control, 1 - Auto. |
+| FOCUS_MODE     | read / write | Focus mode. Value depends on implementation but it is recommended to keep default values: 0 - Manual control, 1 - Auto. |
 | FOCUS_POS      | read / write | Focus position. Value: 0(full near) - 65535(full far).       |
-| CYCLE_TIME_MKS | read only    | Video capture cycle time. **VSource** class sets this value automatically. |
+| CYCLE_TIME_MKS | read only    | Video capture cycle time. **VSource** class sets this value automatically. This parameter means time interval between two captured video frame. |
 | FPS            | read / write | FPS. User can set frame FPS before initialization or after. Some video source classes may set FPS automatically. |
 | IS_OPEN        | read only    | Open flag. 0 - not open, 1 - open.                           |
 | CUSTOM_1       | read / write | Custom parameter. Depends on implementation.                 |
@@ -393,7 +529,11 @@ enum class VSourceParam
 
 
 
-## **VSourceParams class**
+# VSourceParams class description
+
+
+
+## VSourceParams class declaration
 
 **VSourceParams** class used for video source initialization (**initVSource(...)** method) or to get all actual params (**getParams()** method). Also **VSourceParams** provide structure to write/read params from JSON files (**JSON_READABLE** macro, see [**ConfigReader**](https://github.com/ConstantRobotics-Ltd/ConfigReader) class description) and provide methos to encode and decode params. Class declaration:
 
@@ -401,58 +541,63 @@ enum class VSourceParam
 class VSourceParams
 {
 public:
-    /// Log level: 0 - Disable, 1 - Console, 2 - File, 3 - Console and file.
+    /// Logging mode. Values: 0 - Disable, 1 - Only file,
+    /// 2 - Only terminal, 3 - File and terminal.
     int logLevel{0};
-    /// Video source name.
-    std::string source{"/dev/video0"};
+    /// Initialization string. Format depends on implementation but it is
+    /// recommended to keep default format:
+    /// [video device or ID or file];[width];[height];[fourcc].
+    /// Example: "/dev/video0;1920;1080;YUYV".
+    std::string initString{"/dev/video0"};
     /// FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12.
+    /// Value says to video source class which pixel format preferable for
+    /// output video frame. Particular video source class can ignore this params
+    /// during initialization. Parameters should be set before initialization.
     std::string fourcc{"YUYV"};
-    /// Frame width. 0 - will be set automatically.
+    /// Frame width. User can set frame width before initialization
+    /// or after. Some video source classes may set width automatically.
     int width{1920};
-    /// Frame height. 0 - will be set automatically.
+    /// Frame height. User can set frame height before
+    /// initialization or after. Some video source classes may set height
+    /// automatically.
     int height{1080};
-    /// Gain mode. Depends on implementation. Default: 0 - Manual, 1 - Auto.
+    /// Gain mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     int gainMode{1};
-    /// Gain value in case manual gain mode. Value: 0(min) - 65535(max).
+    /// Gain value. Value: 0(min for particular video source class)
+    /// - 65535(max for particular video source class).
     int gain{0};
-    /// Exposure mode. Depends on implementation. Default: 0 - Manual, 1 - Auto.
+    /// Exposure mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     int exposureMode{1};
-    /// Exposure value in case manual exposure mode. Value: 0(min) - 65535(max).
+    /// Exposure value. Value: 0(min for particular video source
+    /// class) - 65535(max for particular video source class).
     int exposure{1};
-    /// Focus mode. Depends on implementation. Default: 0 - Manual, 1 - Auto.
+    /// Focus mode. Focus mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     int focusMode{1};
     /// Focus position. Value: 0(full near) - 65535(full far).
     int focusPos{0};
-    /// Cycle processing time microsecconds.
+    /// Video capture cycle time. **VSource** class sets this value
+    /// automatically. This parameter means time interval between two captured
+    /// video frame.
     int cycleTimeMks{0};
-    /// FPS. 0 - will be set automatically.
+    /// FPS. User can set frame FPS before initialization or after.
+    /// Some video source classes may set FPS automatically.
     float fps{0};
-    /// Open flag.
+    /// Open flag. 0 - not open, 1 - open.
     bool isOpen{false};
-    /// Custom param 1. Depends on implementation.
+    /// Custom parameter. Depends on implementation.
     float custom1{0.0f};
-    /// Custom param 2. Depends on implementation.
+    /// Custom parameter. Depends on implementation.
     float custom2{0.0f};
-    /// Custom param 3. Depends on implementation.
+    /// Custom parameter. Depends on implementation.
     float custom3{0.0f};
 
-    JSON_READABLE(VSourceParams,
-                  logLevel,
-                  source,
-                  fourcc,
-                  width,
-                  height,
-                  gainMode,
-                  gain,
-                  exposureMode,
-                  exposure,
-                  focusMode,
-                  focusPos,
-                  fps,
-                  custom1,
-                  custom2,
-                  custom3);
-
+    JSON_READABLE(VSourceParams, logLevel, initString, fourcc, width, height,
+                  gainMode, gain, exposureMode, exposure, focusMode, focusPos,
+                  fps, custom1, custom2, custom3);
+    
     /**
      * @brief operator =
      * @param src Source object.
@@ -461,14 +606,14 @@ public:
     VSourceParams& operator= (const VSourceParams& src);
     /**
      * @brief Encode params. The method doesn't encode params:
-     * source and fourcc.
+     * initString and fourcc.
      * @param data Pointer to data buffer.
      * @param size Size of data.
      */
     void encode(uint8_t* data, int& size);
     /**
      * @brief Decode params. The method doesn't decode params:
-     * source and fourcc.
+     * initString and fourcc.
      * @param data Pointer to data.
      * @return TRUE is params decoded or FALSE if not.
      */
@@ -480,20 +625,20 @@ public:
 
 | Field        | type   | Description                                                  |
 | ------------ | ------ | ------------------------------------------------------------ |
-| logLevel     | int    | Logging mode. Default values:<br/>0 - Disable printing log info.<br/>1 - Only printing in file.<br/>2 - Only printing in terminal.<br/>3 - File and terminal printing. |
-| source       | string | Video device name (depends on OS), video source or file. Format depends on particular video source class. |
+| logLevel     | int    | Logging mode. Values: 0 - Disable, 1 - Only file, 2 - Only terminal, 3 - File and terminal. |
+| initString   | string | Initialization string. Format depends on implementation but it is recommended to keep default format: [video device or ID or file];[width];[height];[fourcc]. Example: "/dev/video0;1920;1080;YUYV". |
 | fourcc       | string | FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12. Value says to video source class which pixel format preferable for output video frame. Particular video source class can ignore this params during initialization. Parameters should be set before initialization. |
 | width        | int    | Frame width. User can set frame width before initialization or after. Some video source classes may set width automatically. |
 | height       | int    | Frame height. User can set frame height before initialization or after. Some video source classes may set height automatically. |
-| gainMode     | int    | Gain mode. Value depends on implementation. Default values: 0 - Manual control, 1 - Auto. |
+| gainMode     | int    | Gain mode. Value depends on implementation but it is recommended to keep default values: 0 - Manual control, 1 - Auto. |
 | gain         | int    | Gain value. Value: 0(min for particular video source class) - 65535(max for particular video source class). |
-| exposureMode | int    | Exposure mode. Value depends on implementation. Default values: 0 - Manual control, 1 - Auto. |
+| exposureMode | int    | Exposure mode. Value depends on implementation but it is recommended to keep default values: 0 - Manual control, 1 - Auto. |
 | exposure     | int    | Exposure value. Value: 0(min for particular video source class) - 65535(max for particular video source class). |
-| focusMode    | int    | Focus mode. Value depends on implementation. Default values: 0 - Manual control, 1 - Auto. |
+| focusMode    | int    | Focus mode. Value depends on implementation but it is recommended to keep default values: 0 - Manual control, 1 - Auto. |
 | focusPos     | int    | Focus position. Value: 0(full near) - 65535(full far).       |
-| cycleTimeMks | int    | Video capture cycle time. **VSource** class sets this value automatically. |
+| cycleTimeMks | int    | Video capture cycle time. **VSource** class sets this value automatically. This parameter means time interval between two captured video frame. |
 | fps          | float  | FPS. User can set frame FPS before initialization or after. Some video source classes may set FPS automatically. |
-| isOpen       | bool   | Open flag. FLASE - video source not open, TRUE - video source open. |
+| isOpen       | bool   | Open flag. false - not open, true - open.                    |
 | custom1      | float  | Custom parameter. Depends on implementation.                 |
 | custom2      | float  | Custom parameter. Depends on implementation.                 |
 | custom3      | float  | Custom parameter. Depends on implementation.                 |
@@ -504,7 +649,7 @@ public:
 
 ## Encode video source params
 
-**VSourceParams** class provides method **encode(...)** to serialize video source params (fields of VSourceParams class, see Table 4). Serialization of video source params necessary in case when you need to send video source params via communication channels. Method doesn't encode fields: **source** and **fourcc**. Method declaration:
+**VSourceParams** class provides method **encode(...)** to serialize video source params (fields of VSourceParams class, see Table 4). Serialization of video source params necessary in case when you need to send video source params via communication channels. Method doesn't encode fields: **initString** and **fourcc**. Method declaration:
 
 ```cpp
 void encode(uint8_t* data, int& size);
@@ -515,12 +660,12 @@ void encode(uint8_t* data, int& size);
 | data      | Pointer to data buffer. Buffer size should be at least **43** bytes. |
 | size      | Size of encoded data. 43 bytes by default.                   |
 
-**Example:**
+Example:
 
 ```cpp
 // Prepare random params.
 VSourceParams in;
-in.source = "alsfghljb";
+in.initString = "alsfghljb";
 in.fourcc = "skdfjhvk";
 in.logLevel = "dsglbjlkfjwjgre";
 in.cycleTimeMks = rand() % 255;
@@ -547,20 +692,19 @@ cout << "Encoded data size: " << size << " bytes" << endl;
 
 ## Decode video source params
 
-**VSourceParams** class provides method **decode(...)** to deserialize video source params (fields of VSourceParams class, see Table 4). Deserialization of video source params necessary in case when you need to receive video source params via communication channels. Method doesn't decode fields: **source** and **fourcc**. Method declaration:
+**VSourceParams** class provides method **decode(...)** to deserialize video source params (fields of VSourceParams class, see Table 4). Deserialization of video source params necessary in case when you need to receive video source params via communication channels. Method doesn't decode fields: **initString** and **fourcc**. Method declaration:
 
 ```cpp
-bool decode(uint8_t* data, int size);
+bool decode(uint8_t* data);
 ```
 
 | Parameter | Value                                                        |
 | --------- | ------------------------------------------------------------ |
 | data      | Pointer to encode data buffer. Data size should be at least **43** bytes. |
-| size      | Size of encoded data. 43 bytes by default.                   |
 
 **Returns:** TRUE if data decoded (deserialized) or FALSE if not.
 
-**Example:**
+Example:
 
 ```cpp
 // Encode data.
@@ -575,6 +719,52 @@ cout << "Encoded data size: " << size << " bytes" << endl;
 VSourceParams out;
 if (!out.decode(data, size))
     cout << "Can't decode data" << endl;
+```
+
+
+
+## Read params from JSON file and write to JSON file
+
+**VSource** library depends on **ConfigReader** library which provides method to read params from JSON file and to write params to JSON file. Example of writing and reading params to JSON file:
+
+```cpp
+// Write params to file.
+VSurceParams in;
+cr::utils::ConfigReader inConfig;
+inConfig.set(in, "vSourceParams");
+inConfig.writeToFile("TestVSourceParams.json");
+
+// Read params from file.
+cr::utils::ConfigReader outConfig;
+if(!outConfig.readFromFile("TestVSourceParams.json"))
+{
+    cout << "Can't open config file" << endl;
+    return false;
+}
+```
+
+**TestVSourceParams.json** will look like:
+
+```json
+{
+    "vSourceParams": {
+        "custom1": 96.0,
+        "custom2": 212.0,
+        "custom3": 243.0,
+        "exposure": 236,
+        "exposureMode": 63,
+        "focusMode": 167,
+        "focusPos": 34,
+        "fourcc": "skdfjhvk",
+        "fps": 205.0,
+        "gain": 22,
+        "gainMode": 84,
+        "height": 143,
+        "initString": "alsfghljb",
+        "logLevel": 92,
+        "width": 204
+    }
+}
 ```
 
 
@@ -650,7 +840,7 @@ SET(${PARENT}_SUBMODULE_CACHE_OVERWRITE OFF CACHE BOOL "" FORCE)
 SET(${PARENT}_SUBMODULE_VSOURCE                         ON  CACHE BOOL "" FORCE)
 if (${PARENT}_SUBMODULE_VSOURCE)
     SET(${PARENT}_VSOURCE                               ON  CACHE BOOL "" FORCE)
-    SET(${PARENT}_VSOURCE_PARAMS_TEST                   OFF CACHE BOOL "" FORCE)
+    SET(${PARENT}_VSOURCE_TEST                          OFF CACHE BOOL "" FORCE)
 endif()
 
 ################################################################################

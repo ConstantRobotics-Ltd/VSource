@@ -26,7 +26,7 @@ VSourceParams &VSourceParams::operator= (const VSourceParams &src)
 
     // Copy params.
     logLevel = src.logLevel;
-    source = src.source;
+    initString = src.initString;
     fourcc = src.fourcc;
     width = src.width;
     height = src.height;
@@ -108,7 +108,7 @@ bool VSourceParams::decode(uint8_t* data, int size)
     memcpy(&custom2, &data[pos], 4); pos += 4;
     memcpy(&custom3, &data[pos], 4);
 
-    source = "";
+    initString = "";
     fourcc = "";
 
     return true;
@@ -116,21 +116,81 @@ bool VSourceParams::decode(uint8_t* data, int size)
 
 
 
+/// Encode set param command.
+void cr::video::VSource::encodeSetParamCommand(
+        uint8_t* data, int& size, VSourceParam id, float value)
+{
+    // Fill header.
+    data[0] = 0x01;
+    data[1] = VSOURCE_MAJOR_VERSION;
+    data[2] = VSOURCE_MINOR_VERSION;
+
+    // Fill data.
+    int paramId = (int)id;
+    memcpy(&data[3], &paramId, 4);
+    memcpy(&data[7], &value, 4);
+    size = 11;
+}
 
 
 
+/// Encode command.
+void cr::video::VSource::encodeCommand(uint8_t* data,
+                                   int& size,
+                                   cr::video::VSourceCommand id)
+{
+    // Fill header.
+    data[0] = 0x00;
+    data[1] = VSOURCE_MAJOR_VERSION;
+    data[2] = VSOURCE_MINOR_VERSION;
+
+    // Fill data.
+    int commandId = (int)id;
+    memcpy(&data[3], &commandId, 4);
+    size = 7;
+}
 
 
 
+/// Decode command.
+int cr::video::VSource::decodeCommand(uint8_t* data,
+                                  int size,
+                                  cr::video::VSourceParam& paramId,
+                                  cr::video::VSourceCommand& commandId,
+                                  float& value)
+{
+    // Check size.
+    if (size < 7)
+        return -1;
+
+    // Check version.
+    if (data[1] != VSOURCE_MAJOR_VERSION || data[2] != VSOURCE_MINOR_VERSION)
+        return -1;
+
+    // Extract data.
+    int id = 0;
+    memcpy(&id, &data[3], 4);
+    value = 0.0f;
 
 
+    // Check command type.
+    if (data[0] == 0x00)
+    {
+        commandId = (VSourceCommand)id;
+        return 0;
+    }
+    else if (data[0] == 0x01)
+    {
+        // Check size.
+        if (size != 11)
+            return false;
 
+        paramId = (VSourceParam)id;
+        memcpy(&value, &data[7], 4);
+        return 1;
+    }
 
-
-
-
-
-
-
+    return -1;
+}
 
 

@@ -30,7 +30,7 @@ endif()
 ## project configuration
 ################################################################################
 SET(${PARENT}_VSOURCE                        ON  CACHE BOOL "" ${REWRITE_FORCE})
-SET(${PARENT}_VSOURCE_PARAMS_TEST            ON  CACHE BOOL "" ${REWRITE_FORCE})
+SET(${PARENT}_VSOURCE_TEST                   ON  CACHE BOOL "" ${REWRITE_FORCE})
 
 
 
@@ -43,6 +43,6 @@ if (${PARENT}_VSOURCE)
     add_subdirectory(src)
 endif()
 
-if (${PARENT}_VSOURCE_PARAMS_TEST)
+if (${PARENT}_VSOURCE_TEST)
     add_subdirectory(test)
 endif()

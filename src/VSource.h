@@ -14,10 +14,11 @@ namespace video
 class VSourceParams
 {
 public:
-    /// Log level: 0 - Disable, 1 - Console, 2 - File, 3 - Console and file.
+    /// Logging mode. Values: 0 - Disable, 1 - Only file, 2 - Only terminal,
+    /// 3 - File and terminal.
     int logLevel{0};
     /// Video source name.
-    std::string source{"/dev/video0"};
+    std::string initString{"/dev/video0"};
     /// FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12.
     std::string fourcc{"YUYV"};
     /// Frame width. 0 - will be set automatically.
@@ -51,7 +52,7 @@ public:
 
     JSON_READABLE(VSourceParams,
                   logLevel,
-                  source,
+                  initString,
                   fourcc,
                   width,
                   height,
@@ -75,7 +76,7 @@ public:
 
     /**
      * @brief Encode params. The method doesn't encode params:
-     * source and fourcc.
+     * initString and fourcc.
      * @param data Pointer to data buffer.
      * @param size Size of data.
      */
@@ -83,7 +84,7 @@ public:
 
     /**
      * @brief Decode params. The method doesn't decode params:
-     * source and fourcc.
+     * initString and fourcc.
      * @param data Pointer to data.
      * @return TRUE is params decoded or FALSE if not.
      */
@@ -97,42 +98,47 @@ public:
  */
 enum class VSourceParam
 {
-    /// [read/write] Log level:
-    /// 0 - Disable, 1 - Console, 2 - File, 3 - Console and file.
+    /// [read/write] Logging mode. Values: 0 - Disable, 1 - Only file,
+    /// 2 - Only terminal, 3 - File and terminal.
     LOG_LEVEL = 1,
-    /// [read/write] Frame width.
+    /// [read/write] Frame width. User can set frame width before initialization
+    /// or after. Some video source classes may set width automatically.
     WIDTH,
-    /// [read/write] Frame height.
+    /// [read/write] Frame height. User can set frame height before
+    /// initialization or after. Some video source classes may set height
+    /// automatically.
     HEIGHT,
-    /// [read/write] Gain mode. Depends on implementation.
-    /// Default: 0 - Manual, 1 - Auto.
+    /// [read/write] Gain mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     GAIN_MODE,
-    /// [read/write] Gain value in case manual gain mode.
-    /// Value: 0(min) - 65535(max).
+    /// [read/write] Gain value. Value: 0(min for particular video source class)
+    /// - 65535(max for particular video source class).
     GAIN,
-    /// [read/write] Exposure mode. Depends on implementation.
-    /// Default: 0 - Manual, 1 - Auto.
+    /// [read/write] Exposure mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     EXPOSURE_MODE,
-    /// [read/write] Exposure value in case manual exposure mode.
-    /// Value: 0(min) - 65535(max).
+    /// [read/write] Exposure value. Value: 0(min for particular video source
+    /// class) - 65535(max for particular video source class).
     EXPOSURE,
-    /// [read/write] Focus mode. Depends on implementation.
-    /// Default: 0 - Manual, 1 - Auto.
+    /// [read/write] Focus mode. Value depends on implementation but it is
+    /// recommended to keep default values: 0 - Manual control, 1 - Auto.
     FOCUS_MODE,
-    /// [read/write] Focus position.
-    /// Value: 0(full near) - 65535(full far).
+    /// [read/write] Focus position. Value: 0(full near) - 65535(full far).
     FOCUS_POS,
-    /// [read only] Cycle processing time microsecconds.
+    /// [read only] Video capture cycle time. **VSource** class sets this value
+    /// automatically. This parameter means time interval between two captured
+    /// video frame.
     CYCLE_TIME_MKS,
-    /// [read/write]  FPS. 0 - will be set automatically.
+    /// [read/write] FPS. User can set frame FPS before initialization or after.
+    /// Some video source classes may set FPS automatically.
     FPS,
-    /// Open flag. 0 - not open, 1 - open.
+    /// [read only] Open flag. 0 - not open, 1 - open.
     IS_OPEN,
-    /// Custom parameter. Depends on implementation.
+    /// [read/write] Custom parameter. Depends on implementation.
     CUSTOM_1,
-    /// Custom parameter. Depends on implementation.
+    /// [read/write] Custom parameter. Depends on implementation.
     CUSTOM_2,
-    /// Custom parameter. Depends on implementation.
+    /// [read/write] Custom parameter. Depends on implementation.
     CUSTOM_3
 };
 
@@ -192,10 +198,10 @@ public:
      * @brief Get new video frame.
      * @param frame Frame object to copy new data.
      * @param timeoutMsec Timeout to wait new frame data:
-     * timeoutMs == -1 - Method will wait endlessly until new data arrive.
-     * timeoutMs == 0  - Method will only check if new data exist.
-     * timeoutMs > 0   - Method will wait new data specified time.
-     * @return TRUE if new data exist and copied or FALSE if not.
+     * timeoutMsec == -1 - Method will wait endlessly until new data arrive.
+     * timeoutMsec == 0  - Method will only check if new data exist.
+     * timeoutMsec > 0   - Method will wait new data specified time.
+     * @return TRUE if new video frame exist and copied or FALSE if not.
      */
     virtual bool getFrame(Frame& frame, int32_t timeoutMsec = 0) = 0;
 
@@ -208,8 +214,8 @@ public:
     virtual bool setParam(VSourceParam id, float value) = 0;
 
     /**
-     * @brief Get video source parameter value.
-     * @param id Parameter ID according to camera specification.
+     * @brief Get video source param value.
+     * @param id Parameter ID.
      * @return Parameter value or -1.
      */
     virtual float getParam(VSourceParam id) = 0;
@@ -222,10 +228,44 @@ public:
 
     /**
      * @brief Execute command.
-     * @param id Command ID .
+     * @param id Command ID.
      * @return TRUE if the command accepted or FALSE if not.
      */
     virtual bool executeCommand(VSourceCommand id) = 0;
+
+    /**
+     * @brief Encode set param command.
+     * @param data Pointer to data buffer. Must have size >= 11.
+     * @param size Size of encoded data.
+     * @param id Parameter id.
+     * @param value Parameter value.
+     */
+    static void encodeSetParamCommand(
+            uint8_t* data, int& size, VSourceParam id, float value);
+
+    /**
+     * @brief Encode command.
+     * @param data Pointer to data buffer. Must have size >= 11.
+     * @param size Size of encoded data.
+     * @param id Command ID.
+     */
+    static void encodeCommand(
+            uint8_t* data, int& size, VSourceCommand id);
+
+    /**
+     * @brief Decode command.
+     * @param data Pointer to command data.
+     * @param size Size of data.
+     * @param paramId Output command ID.
+     * @param commandId Output command ID.
+     * @param value Param or command value.
+     * @return 0 - command decoded, 1 - set param command decoded, -1 - error.
+     */
+    static int decodeCommand(uint8_t* data,
+                             int size,
+                             VSourceParam& paramId,
+                             VSourceCommand& commandId,
+                             float& value);
 };
 
 }
