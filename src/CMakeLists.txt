@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.13)
 ## LIBRARY-PROJECT
 ## name and version
 ###############################################################################
-project(VSource VERSION 1.2.0 LANGUAGES CXX)
+project(VSource VERSION 1.2.1 LANGUAGES CXX)
 
 
 
