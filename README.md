@@ -6,7 +6,7 @@
 
 # **VSource interface C++ library**
 
-**v1.2.1**
+**v1.3.0**
 
 ------
 
@@ -14,32 +14,7 @@
 
 # Table of contents
 
-- [Overview](#Overview)
-- [Versions](#Versions)
-- [Video source interface class description](#Video-source-interface-class-description)
-  - [VSource class declaration](#VSource-class-declaration)
-  - [getVersion method](#getVersion-method)
-  - [openVSource method](#openVSource-method)
-  - [initVSource method](#initVSource-method)
-  - [isVSourceOpen method](#isVSourceOpen-method)
-  - [closeVSource method](#closeVSource-method)
-  - [getFrame method](#getFrame-method)
-  - [setParam method](#setParam-method)
-  - [getParam method](#getParam-method)
-  - [getParams method](#getParams-method)
-  - [executeCommand method](#executeCommand-method)
-  - [encodeSetParamCommand method](#encodeSetParamCommand-method)
-  - [encodeCommand method](#encodeCommand-method)
-  - [decodeCommand method](#decodeCommand-method)
-- [Data structures](#Data-structures)
-  - [VSourceCommand enum](#VSourceCommand-enum)
-  - [VSourceParam enum](#VSourceParam-enum)
-- [VSourceParams class description](#VSourceParams-class-description)
-  - [VSourceParams class declaration](#VSourceParams-class-declaration)
-  - [Encode video source params](#Encode-video-source-params)
-  - [Decode video source params](#Decode-video-source-params)
-  - [Read params from JSON file and write to JSON file](#Read-params-from-JSON-file-and-write-to-JSON-file)
-- [Build and connect to your project](#Build-and-connect-to-your-project)
+[TOC]
 
 
 
@@ -61,6 +36,7 @@
 | 1.1.1   | 29.06.2023   | - Added license.<br />- Repository made public.              |
 | 1.2.0   | 01.07.2023   | - Added new methods to encode/decode commands.<br />- Tests updated.<br />- Documentation updated. |
 | 1.2.1   | 01.07.2023   | - Params description updated in source code.                 |
+| 1.3.0   | 05.07.2023   | - VSourceParams class updated (initString replaced by source).<br />- decode(...) method in VSourceParams class updated. |
 
 
 
@@ -188,7 +164,7 @@ std::cout << "VSource class version: " << VSource::getVersion() << std::endl;
 Console output:
 
 ```bash
-VSource class version: 1.1.0
+VSource class version: 1.3.0
 ```
 
 
@@ -211,7 +187,7 @@ virtual bool openVSource(std::string& initString) = 0;
 
 ## initVSource method
 
-**initVSource(...)** method initialized video source by set of parameters. Instead of **initVSource(...)** method user can call **openVSource(...)**. Method declaration:
+**initVSource(...)** method designed to initialize video source by set of parameters. Instead of **initVSource(...)** method user can call **openVSource(...)**. Method declaration:
 
 ```cpp
 virtual bool initVSource(VSourceParams& params) = 0;
@@ -346,7 +322,7 @@ static void encodeSetParamCommand(uint8_t* data, int& size, VSourceParam id, flo
 | ---- | ----- | -------------------------------------------------- |
 | 0    | 0x01  | SET_PARAM command header value.                    |
 | 1    | 0x01  | Major version of VSource class.                    |
-| 2    | 0x02  | Minor version of VSource class.                    |
+| 2    | 0x03  | Minor version of VSource class.                    |
 | 3    | id    | Parameter ID **int32_t** in Little-endian format.  |
 | 4    | id    | Parameter ID **int32_t** in Little-endian format.  |
 | 5    | id    | Parameter ID **int32_t** in Little-endian format.  |
@@ -390,8 +366,8 @@ static void encodeCommand(uint8_t* data, int& size, VSourceCommand id);
 | Byte | Value | Description                                     |
 | ---- | ----- | ----------------------------------------------- |
 | 0    | 0x00  | COMMAND header value.                           |
-| 1    | 0x02  | Major version of VSource class.                 |
-| 2    | 0x00  | Minor version of VSource class.                 |
+| 1    | 0x01  | Major version of VSource class.                 |
+| 2    | 0x03  | Minor version of VSource class.                 |
 | 3    | id    | Command ID **int32_t** in Little-endian format. |
 | 4    | id    | Command ID **int32_t** in Little-endian format. |
 | 5    | id    | Command ID **int32_t** in Little-endian format. |
@@ -545,11 +521,8 @@ public:
     /// Logging mode. Values: 0 - Disable, 1 - Only file,
     /// 2 - Only terminal, 3 - File and terminal.
     int logLevel{0};
-    /// Initialization string. Format depends on implementation but it is
-    /// recommended to keep default format:
-    /// [video device or ID or file];[width];[height];[fourcc].
-    /// Example: "/dev/video0;1920;1080;YUYV".
-    std::string initString{"/dev/video0"};
+    /// Video source: file, video stream, video device, camera num, etc.
+    std::string source{"/dev/video0"};
     /// FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12.
     /// Value says to video source class which pixel format preferable for
     /// output video frame. Particular video source class can ignore this params
@@ -595,10 +568,10 @@ public:
     /// Custom parameter. Depends on implementation.
     float custom3{0.0f};
 
-    JSON_READABLE(VSourceParams, logLevel, initString, fourcc, width, height,
-                  gainMode, gain, exposureMode, exposure, focusMode, focusPos,
-                  fps, custom1, custom2, custom3);
-    
+    JSON_READABLE(VSourceParams, logLevel, source, fourcc, width,
+                  height, gainMode, gain, exposureMode, exposure,
+                  focusMode, focusPos, fps, custom1, custom2, custom3);
+
     /**
      * @brief operator =
      * @param src Source object.
@@ -607,18 +580,18 @@ public:
     VSourceParams& operator= (const VSourceParams& src);
     /**
      * @brief Encode params. The method doesn't encode params:
-     * initString and fourcc.
+     * source and fourcc fields.
      * @param data Pointer to data buffer.
      * @param size Size of data.
      */
     void encode(uint8_t* data, int& size);
     /**
      * @brief Decode params. The method doesn't decode params:
-     * initString and fourcc.
+     * source and fourcc fields.
      * @param data Pointer to data.
      * @return TRUE is params decoded or FALSE if not.
      */
-    bool decode(uint8_t* data, int size);
+    bool decode(uint8_t* data);
 };
 ```
 
@@ -627,7 +600,7 @@ public:
 | Field        | type   | Description                                                  |
 | ------------ | ------ | ------------------------------------------------------------ |
 | logLevel     | int    | Logging mode. Values: 0 - Disable, 1 - Only file, 2 - Only terminal, 3 - File and terminal. |
-| initString   | string | Initialization string. Format depends on implementation but it is recommended to keep default format: [video device or ID or file];[width];[height];[fourcc]. Example: "/dev/video0;1920;1080;YUYV". |
+| source       | string | Video source: file, video stream, video device, camera num, etc. |
 | fourcc       | string | FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12. Value says to video source class which pixel format preferable for output video frame. Particular video source class can ignore this params during initialization. Parameters should be set before initialization. |
 | width        | int    | Frame width. User can set frame width before initialization or after. Some video source classes may set width automatically. |
 | height       | int    | Frame height. User can set frame height before initialization or after. Some video source classes may set height automatically. |
@@ -718,7 +691,7 @@ cout << "Encoded data size: " << size << " bytes" << endl;
 
 // Decode data.
 VSourceParams out;
-if (!out.decode(data, size))
+if (!out.decode(data))
     cout << "Can't decode data" << endl;
 ```
 

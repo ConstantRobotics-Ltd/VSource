@@ -26,7 +26,7 @@ VSourceParams &VSourceParams::operator= (const VSourceParams &src)
 
     // Copy params.
     logLevel = src.logLevel;
-    initString = src.initString;
+    source = src.source;
     fourcc = src.fourcc;
     width = src.width;
     height = src.height;
@@ -78,7 +78,7 @@ void VSourceParams::encode(uint8_t* data, int& size)
 
 
 /// Decode params.
-bool VSourceParams::decode(uint8_t* data, int size)
+bool VSourceParams::decode(uint8_t* data)
 {
     // Decode version.
     if (data[0] != VSOURCE_MAJOR_VERSION)
@@ -108,7 +108,7 @@ bool VSourceParams::decode(uint8_t* data, int size)
     memcpy(&custom2, &data[pos], 4); pos += 4;
     memcpy(&custom3, &data[pos], 4);
 
-    initString = "";
+    source = "";
     fourcc = "";
 
     return true;

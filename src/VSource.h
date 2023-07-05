@@ -17,11 +17,8 @@ public:
     /// Logging mode. Values: 0 - Disable, 1 - Only file,
     /// 2 - Only terminal, 3 - File and terminal.
     int logLevel{0};
-    /// Initialization string. Format depends on implementation but it is
-    /// recommended to keep default format:
-    /// [video device or ID or file];[width];[height];[fourcc].
-    /// Example: "/dev/video0;1920;1080;YUYV".
-    std::string initString{"/dev/video0"};
+    /// Video source: file, video stream, video device, camera num, etc.
+    std::string source{"/dev/video0"};
     /// FOURCC: RGB24, BGR24, YUYV, UYVY, GRAY, YUV24, NV12, NV21, YU12, YV12.
     /// Value says to video source class which pixel format preferable for
     /// output video frame. Particular video source class can ignore this params
@@ -69,7 +66,7 @@ public:
 
     JSON_READABLE(VSourceParams,
                   logLevel,
-                  initString,
+                  source,
                   fourcc,
                   width,
                   height,
@@ -93,7 +90,7 @@ public:
 
     /**
      * @brief Encode params. The method doesn't encode params:
-     * initString and fourcc.
+     * source and fourcc fields.
      * @param data Pointer to data buffer.
      * @param size Size of data.
      */
@@ -101,11 +98,11 @@ public:
 
     /**
      * @brief Decode params. The method doesn't decode params:
-     * initString and fourcc.
+     * source and fourcc fields.
      * @param data Pointer to data.
      * @return TRUE is params decoded or FALSE if not.
      */
-    bool decode(uint8_t* data, int size);
+    bool decode(uint8_t* data);
 };
 
 

@@ -71,7 +71,7 @@ bool copyTest()
 {
     // Prepare random params.
     VSourceParams in;
-    in.initString = "alsfghljb";
+    in.source = "alsfghljb";
     in.fourcc = "skdfjhvk";
     in.logLevel = rand() % 255;
     in.cycleTimeMks = rand() % 255;
@@ -93,7 +93,7 @@ bool copyTest()
     VSourceParams out = in;
 
     // Compare params.
-    if (in.initString != out.initString)
+    if (in.source != out.source)
     {
         cout << "in.source" << endl;
         return false;
@@ -189,7 +189,7 @@ bool encodeDecodeTest()
 {
     // Prepare random params.
     VSourceParams in;
-    in.initString = "alsfghljb";
+    in.source = "source";
     in.fourcc = "skdfjhvk";
     in.logLevel = rand() % 255;
     in.cycleTimeMks = rand() % 255;
@@ -216,14 +216,14 @@ bool encodeDecodeTest()
 
     // Decode data.
     VSourceParams out;
-    if (!out.decode(data, size))
+    if (!out.decode(data))
     {
         cout << "Can't decode data" << endl;
         return false;
     }
 
     // Compare params.
-    if (out.initString != "")
+    if (out.source != "")
     {
         cout << "in.source" << endl;
         return false;
@@ -374,7 +374,7 @@ bool jsonReadWriteTest()
 {
     // Prepare random params.
     VSourceParams in;
-    in.initString = "alsfghljb";
+    in.source = "alsfghljb";
     in.fourcc = "skdfjhvk";
     in.logLevel = rand() % 255;
     in.cycleTimeMks = rand() % 255;
@@ -414,7 +414,7 @@ bool jsonReadWriteTest()
 
     // Compare params.
     bool result = true;
-    if (out.initString != in.initString)
+    if (out.source != in.source)
     {
         cout << "in.source" << endl;
         result = false;
