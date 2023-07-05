@@ -14,7 +14,32 @@
 
 # Table of contents
 
-[TOC]
+- [Overview](#Overview)
+- [Versions](#Versions)
+- [Video source interface class description](#Video-source-interface-class-description)
+  - [VSource class declaration](#VSource-class-declaration)
+  - [getVersion method](#getVersion-method)
+  - [openVSource method](#openVSource-method)
+  - [initVSource method](#initVSource-method)
+  - [isVSourceOpen method](#isVSourceOpen-method)
+  - [closeVSource method](#closeVSource-method)
+  - [getFrame method](#getFrame-method)
+  - [setParam method](#setParam-method)
+  - [getParam method](#getParam-method)
+  - [getParams method](#getParams-method)
+  - [executeCommand method](#executeCommand-method)
+  - [encodeSetParamCommand method](#encodeSetParamCommand-method)
+  - [encodeCommand method](#encodeCommand-method)
+  - [decodeCommand method](#decodeCommand-method)
+- [Data structures](#Data-structures)
+  - [VSourceCommand enum](#VSourceCommand-enum)
+  - [VSourceParam enum](#VSourceParam-enum)
+- [VSourceParams class description](#VSourceParams-class-description)
+  - [VSourceParams class declaration](#VSourceParams-class-declaration)
+  - [Encode video source params](#Encode-video-source-params)
+  - [Decode video source params](#Decode-video-source-params)
+  - [Read params from JSON file and write to JSON file](#Read-params-from-JSON-file-and-write-to-JSON-file)
+- [Build and connect to your project](#Build-and-connect-to-your-project)
 
 
 
