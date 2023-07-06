@@ -6,7 +6,7 @@
 
 # **VSource interface C++ library**
 
-**v1.3.1**
+**v1.3.2**
 
 ------
 
@@ -63,6 +63,7 @@
 | 1.2.1   | 01.07.2023   | - Params description updated in source code.                 |
 | 1.3.0   | 05.07.2023   | - VSourceParams class updated (initString replaced by source).<br />- decode(...) method in VSourceParams class updated. |
 | 1.3.1   | 06.07.2023   | - gain, exposure and focusPos fields of VSourceParams excluded from JSOM reading/writing. |
+| 1.3.2   | 06.07.2023   | - Frame library version updated.                             |
 
 
 
