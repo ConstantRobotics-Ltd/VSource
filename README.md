@@ -6,7 +6,7 @@
 
 # **VSource interface C++ library**
 
-**v1.3.0**
+**v1.3.1**
 
 ------
 
@@ -62,6 +62,7 @@
 | 1.2.0   | 01.07.2023   | - Added new methods to encode/decode commands.<br />- Tests updated.<br />- Documentation updated. |
 | 1.2.1   | 01.07.2023   | - Params description updated in source code.                 |
 | 1.3.0   | 05.07.2023   | - VSourceParams class updated (initString replaced by source).<br />- decode(...) method in VSourceParams class updated. |
+| 1.3.1   | 06.07.2023   | - gain, exposure and focusPos fields of VSourceParams excluded from JSOM reading/writing. |
 
 
 
@@ -593,9 +594,9 @@ public:
     /// Custom parameter. Depends on implementation.
     float custom3{0.0f};
 
-    JSON_READABLE(VSourceParams, logLevel, source, fourcc, width,
-                  height, gainMode, gain, exposureMode, exposure,
-                  focusMode, focusPos, fps, custom1, custom2, custom3);
+    JSON_READABLE(VSourceParams, logLevel, source, fourcc, width, height,
+                  gainMode, exposureMode, focusMode, fps, custom1,
+                  custom2, custom3);
 
     /**
      * @brief operator =
@@ -750,17 +751,14 @@ if(!outConfig.readFromFile("TestVSourceParams.json"))
         "custom1": 96.0,
         "custom2": 212.0,
         "custom3": 243.0,
-        "exposure": 236,
         "exposureMode": 63,
         "focusMode": 167,
-        "focusPos": 34,
         "fourcc": "skdfjhvk",
         "fps": 205.0,
-        "gain": 22,
         "gainMode": 84,
         "height": 143,
-        "initString": "alsfghljb",
         "logLevel": 92,
+        "source": "alsfghljb",
         "width": 204
     }
 }

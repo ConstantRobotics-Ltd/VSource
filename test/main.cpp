@@ -429,11 +429,6 @@ bool jsonReadWriteTest()
         cout << "in.logLevel" << endl;
         result = false;
     }
-    if (in.exposure != out.exposure)
-    {
-        cout << "in.exposure" << endl;
-        result = false;
-    }
     if (in.exposureMode != out.exposureMode)
     {
         cout << "in.exposureMode" << endl;
@@ -444,19 +439,9 @@ bool jsonReadWriteTest()
         cout << "in.gainMode" << endl;
         result = false;
     }
-    if (in.gain != out.gain)
-    {
-        cout << "in.gain" << endl;
-        result = false;
-    }
     if (in.focusMode != out.focusMode)
     {
         cout << "in.focusMode" << endl;
-        result = false;
-    }
-    if (in.focusPos != out.focusPos)
-    {
-        cout << "in.focusPos" << endl;
         result = false;
     }
     if (in.fps != out.fps)
