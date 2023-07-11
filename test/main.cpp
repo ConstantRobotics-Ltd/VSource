@@ -15,6 +15,9 @@ bool copyTest();
 // Encode/decode test.
 bool encodeDecodeTest();
 
+/// Encode/decode test with params mask.
+bool encodeDecodeWithMaskTest();
+
 /// Encode/decode commands test.
 bool encodeDecodeCommandsTest();
 
@@ -42,6 +45,13 @@ int main(void)
 
     cout << "Encode/Decode test:" << endl;
     if (encodeDecodeTest())
+        cout << "OK" << endl;
+    else
+        cout << "ERROR" << endl;
+    cout << endl;
+
+    cout << "Encode/Decode test with params mask:" << endl;
+    if (encodeDecodeWithMaskTest())
         cout << "OK" << endl;
     else
         cout << "ERROR" << endl;
@@ -476,6 +486,154 @@ bool jsonReadWriteTest()
     }
 
     return result;
+}
+
+
+
+/// Encode/decode test with params mask.
+bool encodeDecodeWithMaskTest()
+{
+    // Prepare random params.
+    VSourceParams in;
+    in.source = "source";
+    in.fourcc = "skdfjhvk";
+    in.logLevel = rand() % 255;
+    in.cycleTimeMks = rand() % 255;
+    in.exposure = rand() % 255;
+    in.exposureMode = rand() % 255;
+    in.gainMode = rand() % 255;
+    in.gain = rand() % 255;
+    in.focusMode = rand() % 255;
+    in.focusPos = rand() % 255;
+    in.fps = rand() % 255;
+    in.width = rand() % 255;
+    in.height = rand() % 255;
+    in.isOpen = true;
+    in.custom1 = rand() % 255;
+    in.custom2 = rand() % 255;
+    in.custom3 = rand() % 255;
+
+    // Prepare params mask.
+    VSourceParamsMask mask;
+    mask.logLevel = true;
+    mask.cycleTimeMks = false;
+    mask.exposure = true;
+    mask.exposureMode = false;
+    mask.gainMode = true;
+    mask.gain = false;
+    mask.focusMode = true;
+    mask.focusPos = false;
+    mask.fps = true;
+    mask.width = false;
+    mask.height = true;
+    mask.isOpen = false;
+    mask.custom1 = true;
+    mask.custom2 = false;
+    mask.custom3 = true;
+
+    // Encode data.
+    uint8_t data[1024];
+    int size = 0;
+    in.encode(data, size, &mask);
+
+    cout << "Encoded data size: " << size << " bytes" << endl;
+
+    // Decode data.
+    VSourceParams out;
+    if (!out.decode(data))
+    {
+        cout << "Can't decode data" << endl;
+        return false;
+    }
+
+    // Compare params.
+    if (out.source != "")
+    {
+        cout << "in.source" << endl;
+        return false;
+    }
+    if (out.fourcc != "")
+    {
+        cout << "in.fourcc" << endl;
+        return false;
+    }
+    if (in.logLevel != out.logLevel)
+    {
+        cout << "in.logLevel" << endl;
+        return false;
+    }
+    if (0 != out.cycleTimeMks)
+    {
+        cout << "in.cycleTimeMks" << endl;
+        return false;
+    }
+    if (in.exposure != out.exposure)
+    {
+        cout << "in.exposure" << endl;
+        return false;
+    }
+    if (0 != out.exposureMode)
+    {
+        cout << "in.exposureMode" << endl;
+        return false;
+    }
+    if (in.gainMode != out.gainMode)
+    {
+        cout << "in.gainMode" << endl;
+        return false;
+    }
+    if (0 != out.gain)
+    {
+        cout << "in.gain" << endl;
+        return false;
+    }
+    if (in.focusMode != out.focusMode)
+    {
+        cout << "in.focusMode" << endl;
+        return false;
+    }
+    if (0 != out.focusPos)
+    {
+        cout << "in.focusPos" << endl;
+        return false;
+    }
+    if (in.fps != out.fps)
+    {
+        cout << "in.fps" << endl;
+        return false;
+    }
+    if (0 != out.width)
+    {
+        cout << "in.width" << endl;
+        return false;
+    }
+    if (in.height != out.height)
+    {
+        cout << "in.height" << endl;
+        return false;
+    }
+    if (false != out.isOpen)
+    {
+        cout << "in.isOpen" << endl;
+        return false;
+    }
+    if (in.custom1 != out.custom1)
+    {
+        cout << "in.custom1" << endl;
+        return false;
+    }
+    if (0.0f != out.custom2)
+    {
+        cout << "in.custom2" << endl;
+        return false;
+    }
+    if (in.custom3 != out.custom3)
+    {
+        cout << "in.custom3" << endl;
+        return false;
+    }
+
+    return true;
 }
 
 

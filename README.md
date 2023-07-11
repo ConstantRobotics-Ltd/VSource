@@ -1,12 +1,10 @@
 
 
-
-
 ![logo](_static/vsource_logo.png)
 
-# **VSource interface C++ library**
+# VSource interface C++ library
 
-**v1.3.2**
+**v1.4.0**
 
 ------
 
@@ -36,8 +34,8 @@
   - [VSourceParam enum](#VSourceParam-enum)
 - [VSourceParams class description](#VSourceParams-class-description)
   - [VSourceParams class declaration](#VSourceParams-class-declaration)
-  - [Encode video source params](#Encode-video-source-params)
-  - [Decode video source params](#Decode-video-source-params)
+  - [Serialize video source params](#Serialize-video-source-params)
+  - [Deserialize video source params](#Deserialize-video-source-params)
   - [Read params from JSON file and write to JSON file](#Read-params-from-JSON-file-and-write-to-JSON-file)
 - [Build and connect to your project](#Build-and-connect-to-your-project)
 
@@ -64,6 +62,7 @@
 | 1.3.0   | 05.07.2023   | - VSourceParams class updated (initString replaced by source).<br />- decode(...) method in VSourceParams class updated. |
 | 1.3.1   | 06.07.2023   | - gain, exposure and focusPos fields of VSourceParams excluded from JSOM reading/writing. |
 | 1.3.2   | 06.07.2023   | - Frame library version updated.                             |
+| 1.4.0   | 11.07.2023   | - Added VSourceParamsMask structure.<br />- Added params mask in encode(...) method of VSourceParams class. |
 
 
 
@@ -191,7 +190,7 @@ std::cout << "VSource class version: " << VSource::getVersion() << std::endl;
 Console output:
 
 ```bash
-VSource class version: 1.3.0
+VSource class version: 1.4.0
 ```
 
 
@@ -610,8 +609,9 @@ public:
      * source and fourcc fields.
      * @param data Pointer to data buffer.
      * @param size Size of data.
+     * @param mask Pointer to parameters mask.
      */
-    void encode(uint8_t* data, int& size);
+    void encode(uint8_t* data, int& size, VSourceParamsMask* mask = nullptr);
     /**
      * @brief Decode params. The method doesn't decode params:
      * source and fourcc fields.
@@ -648,52 +648,82 @@ public:
 
 
 
-## Encode video source params
+## Serialize video source params
 
-**VSourceParams** class provides method **encode(...)** to serialize video source params (fields of VSourceParams class, see Table 4). Serialization of video source params necessary in case when you need to send video source params via communication channels. Method doesn't encode fields: **initString** and **fourcc**. Method declaration:
+**VSourceParams** class provides method **encode(...)** to serialize video source params (fields of VSourceParams class, see Table 4). Serialization of video source params necessary in case when you need to send video source params via communication channels. Method doesn't encode fields: **initString** and **fourcc**. Method provides options to exclude particular parameters from serialization. To do this method inserts binary mask (2 bytes) where each bit represents particular parameter and **decode(...)** method recognizes it. Method declaration:
 
 ```cpp
-void encode(uint8_t* data, int& size);
+void encode(uint8_t* data, int& size, VSourceParamsMask* mask = nullptr);
 ```
 
 | Parameter | Value                                                        |
 | --------- | ------------------------------------------------------------ |
 | data      | Pointer to data buffer. Buffer size should be at least **43** bytes. |
 | size      | Size of encoded data. 43 bytes by default.                   |
+| mask      | Parameters mask - pointer to **VSourceParamsMask** structure. **VSourceParamsMask** (declared in VSource.h file) determines flags for each field (parameter) declared in **VSourceParams** class. If the user wants to exclude any parameters from serialization, he can put a pointer to the mask. If the user wants to exclude a particular parameter from serialization, he should set the corresponding flag in the VSourceParamsMask structure. |
 
-Example:
+**VSourceParamsMask** structure declaration:
+
+```cpp
+typedef struct VSourceParamsMask
+{
+    bool logLevel{true};
+    bool width{true};
+    bool height{true};
+    bool gainMode{true};
+    bool gain{true};
+    bool exposureMode{true};
+    bool exposure{true};
+    bool focusMode{true};
+    bool focusPos{true};
+    bool cycleTimeMks{true};
+    bool fps{true};
+    bool isOpen{true};
+    bool custom1{true};
+    bool custom2{true};
+    bool custom3{true};
+} VSourceParamsMask;
+```
+
+Example without parameters mask:
 
 ```cpp
 // Prepare random params.
 VSourceParams in;
 in.initString = "alsfghljb";
-in.fourcc = "skdfjhvk";
-in.logLevel = "dsglbjlkfjwjgre";
-in.cycleTimeMks = rand() % 255;
-in.exposure = rand() % 255;
-in.exposureMode = rand() % 255;
-in.gainMode = rand() % 255;
-in.gain = rand() % 255;
-in.focusMode = rand() % 255;
-in.focusPos = rand() % 255;
-in.fps = rand() % 255;
-in.width = rand() % 255;
-in.height = rand() % 255;
-in.isOpen = true;
+in.logLevel = 0;
 
 // Encode data.
 uint8_t data[1024];
 int size = 0;
 in.encode(data, size);
+cout << "Encoded data size: " << size << " bytes" << endl;
+```
 
+Example without parameters mask:
+
+```cpp
+// Prepare random params.
+VSourceParams in;
+in.initString = "alsfghljb";
+in.logLevel = 0;
+
+// Prepare params mask.
+VSourceParamsMask mask;
+mask.logLevel = false; // Exclude logLevel. Others by default.
+
+// Encode data.
+uint8_t data[1024];
+int size = 0;
+in.encode(data, size, &mask);
 cout << "Encoded data size: " << size << " bytes" << endl;
 ```
 
 
 
-## Decode video source params
+## Deserialize video source params
 
-**VSourceParams** class provides method **decode(...)** to deserialize video source params (fields of VSourceParams class, see Table 4). Deserialization of video source params necessary in case when you need to receive video source params via communication channels. Method doesn't decode fields: **initString** and **fourcc**. Method declaration:
+**VSourceParams** class provides method **decode(...)** to deserialize video source params (fields of VSourceParams class, see Table 4). Deserialization of video source params necessary in case when you need to receive video source params via communication channels. Method doesn't decode fields: **initString** and **fourcc**. Method automatically recognizes which parameters were serialized by **encode(...)** method. Method declaration:
 
 ```cpp
 bool decode(uint8_t* data);

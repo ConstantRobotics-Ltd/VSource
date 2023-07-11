@@ -9,6 +9,30 @@ namespace cr
 namespace video
 {
 /**
+ * @brief Video source params mask structure.
+ */
+typedef struct VSourceParamsMask
+{
+    bool logLevel{true};
+    bool width{true};
+    bool height{true};
+    bool gainMode{true};
+    bool gain{true};
+    bool exposureMode{true};
+    bool exposure{true};
+    bool focusMode{true};
+    bool focusPos{true};
+    bool cycleTimeMks{true};
+    bool fps{true};
+    bool isOpen{true};
+    bool custom1{true};
+    bool custom2{true};
+    bool custom3{true};
+} VSourceParamsMask;
+
+
+
+/**
  * @brief Video source params structure.
  */
 class VSourceParams
@@ -90,8 +114,9 @@ public:
      * source and fourcc fields.
      * @param data Pointer to data buffer.
      * @param size Size of data.
+     * @param mask Pointer to parameters mask.
      */
-    void encode(uint8_t* data, int& size);
+    void encode(uint8_t* data, int& size, VSourceParamsMask* mask = nullptr);
 
     /**
      * @brief Decode params. The method doesn't decode params:
