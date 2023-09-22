@@ -31,6 +31,7 @@ endif()
 ################################################################################
 SET(${PARENT}_VSOURCE                        ON  CACHE BOOL "" ${REWRITE_FORCE})
 SET(${PARENT}_VSOURCE_TEST                   ON  CACHE BOOL "" ${REWRITE_FORCE})
+SET(${PARENT}_VSOURCE_EXAMPLE                ON  CACHE BOOL "" ${REWRITE_FORCE})
 
 
 
@@ -45,4 +46,8 @@ endif()
 
 if (${PARENT}_VSOURCE_TEST)
     add_subdirectory(test)
+endif()
+
+if (${PARENT}_VSOURCE_EXAMPLE)
+    add_subdirectory(example)
 endif()

@@ -113,18 +113,22 @@ public:
      * @brief Encode params. The method doesn't encode params:
      * source and fourcc fields.
      * @param data Pointer to data buffer.
+     * @param bufferSize Size of data biffer.
      * @param size Size of data.
      * @param mask Pointer to parameters mask.
+     * @return TRUE if params encoded or FALSE if not.
      */
-    void encode(uint8_t* data, int& size, VSourceParamsMask* mask = nullptr);
+    bool encode(uint8_t* data, int bufferSize, int& size,
+                VSourceParamsMask* mask = nullptr);
 
     /**
      * @brief Decode params. The method doesn't decode params:
      * source and fourcc fields.
      * @param data Pointer to data.
+     * @param dataSize Size of data.
      * @return TRUE is params decoded or FALSE if not.
      */
-    bool decode(uint8_t* data);
+    bool decode(uint8_t* data, int dataSize);
 };
 
 
@@ -302,6 +306,14 @@ public:
                              VSourceParam& paramId,
                              VSourceCommand& commandId,
                              float& value);
+
+    /**
+     * @brief Decode and execute command.
+     * @param data Pointer to command data.
+     * @param size Size of data.
+     * @return 0 - command decoded, 1 - set param command decoded, -1 - error.
+     */
+    virtual bool decodeAndExecuteCommand(uint8_t* data, int size) = 0;
 };
 
 }

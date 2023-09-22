@@ -6,7 +6,7 @@ cmake_minimum_required(VERSION 3.13)
 ## LIBRARY-PROJECT
 ## name and version
 ###############################################################################
-project(VSource VERSION 1.5.0 LANGUAGES CXX)
+project(CustomVSource VERSION 1.0.0 LANGUAGES CXX)
 
 
 
@@ -52,7 +52,6 @@ target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
 ## LINK LIBRARIES
 ## linking all dependencies
 ###############################################################################
-target_link_libraries(${PROJECT_NAME} Frame)
-target_link_libraries(${PROJECT_NAME} ConfigReader)
+target_link_libraries(${PROJECT_NAME} VSource)
 
 

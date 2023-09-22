@@ -9,7 +9,6 @@ using namespace cr::video;
 
 
 
-/// Get string of current library version.
 std::string VSource::getVersion()
 {
     return VSOURCE_VERSION;
@@ -17,7 +16,6 @@ std::string VSource::getVersion()
 
 
 
-/// Copy operator.
 VSourceParams &VSourceParams::operator= (const VSourceParams &src)
 {
     // Check yourself.
@@ -48,9 +46,16 @@ VSourceParams &VSourceParams::operator= (const VSourceParams &src)
 
 
 
-/// Encode params.
-void VSourceParams::encode(uint8_t* data, int& size, VSourceParamsMask* mask)
+bool VSourceParams::encode(uint8_t* data, int bufferSize, int& size,
+                           VSourceParamsMask* mask)
 {
+    // Check buffer size.
+    if (bufferSize < 62)
+    {
+        size = 0;
+        return false;
+    }
+
     // Encode version.
     int pos = 0;
     data[pos] = 0x02; pos += 1;
@@ -82,7 +87,7 @@ void VSourceParams::encode(uint8_t* data, int& size, VSourceParamsMask* mask)
 
         size = pos;
 
-        return;
+        return true;
     }
 
     // Prepare mask.
@@ -164,15 +169,22 @@ void VSourceParams::encode(uint8_t* data, int& size, VSourceParamsMask* mask)
     }
     if (mask->custom3)
     {
-        memcpy(&data[pos], &custom3, 4);
+        memcpy(&data[pos], &custom3, 4); pos += 4;
     }
+
+    size = pos;
+
+    return true;
 }
 
 
 
-/// Decode params.
-bool VSourceParams::decode(uint8_t* data)
+bool VSourceParams::decode(uint8_t* data, int dataSize)
 {
+    // Check data size.
+    if (dataSize < 5)
+        return false;
+
     // Check header.
     if (data[0] != 0x02)
         return false;
@@ -186,6 +198,8 @@ bool VSourceParams::decode(uint8_t* data)
     int pos = 5;
     if ((data[3] & (uint8_t)128) == (uint8_t)128)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&logLevel, &data[pos], 4); pos += 4;
     }
     else
@@ -194,6 +208,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[3] & (uint8_t)64) == (uint8_t)64)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&width, &data[pos], 4); pos += 4;
     }
     else
@@ -202,6 +218,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[3] & (uint8_t)32) == (uint8_t)32)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&height, &data[pos], 4); pos += 4;
     }
     else
@@ -210,6 +228,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[3] & (uint8_t)16) == (uint8_t)16)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&gainMode, &data[pos], 4); pos += 4;
     }
     else
@@ -218,6 +238,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[3] & (uint8_t)8) == (uint8_t)8)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&gain, &data[pos], 4); pos += 4;
     }
     else
@@ -226,6 +248,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[3] & (uint8_t)4) == (uint8_t)4)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&exposureMode, &data[pos], 4); pos += 4;
     }
     else
@@ -234,6 +258,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[3] & (uint8_t)2) == (uint8_t)2)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&exposure, &data[pos], 4); pos += 4;
     }
     else
@@ -242,6 +268,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[3] & (uint8_t)1) == (uint8_t)1)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&focusMode, &data[pos], 4); pos += 4;
     }
     else
@@ -252,6 +280,8 @@ bool VSourceParams::decode(uint8_t* data)
 
     if ((data[4] & (uint8_t)128) == (uint8_t)128)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&focusPos, &data[pos], 4); pos += 4;
     }
     else
@@ -260,6 +290,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[4] & (uint8_t)64) == (uint8_t)64)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&cycleTimeMks, &data[pos], 4); pos += 4;
     }
     else
@@ -268,6 +300,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[4] & (uint8_t)32) == (uint8_t)32)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&fps, &data[pos], 4); pos += 4;
     }
     else
@@ -276,6 +310,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[4] & (uint8_t)16) == (uint8_t)16)
     {
+        if (dataSize < pos + 1)
+            return false;
         isOpen = data[pos] == 0x00 ? false : true; pos += 1;
     }
     else
@@ -284,6 +320,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[4] & (uint8_t)8) == (uint8_t)8)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&custom1, &data[pos], 4); pos += 4;
     }
     else
@@ -292,6 +330,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[4] & (uint8_t)4) == (uint8_t)4)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&custom2, &data[pos], 4); pos += 4;
     }
     else
@@ -300,6 +340,8 @@ bool VSourceParams::decode(uint8_t* data)
     }
     if ((data[4] & (uint8_t)2) == (uint8_t)2)
     {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&custom3, &data[pos], 4);
     }
     else
@@ -315,7 +357,6 @@ bool VSourceParams::decode(uint8_t* data)
 
 
 
-/// Encode set param command.
 void cr::video::VSource::encodeSetParamCommand(
         uint8_t* data, int& size, VSourceParam id, float value)
 {
@@ -333,7 +374,6 @@ void cr::video::VSource::encodeSetParamCommand(
 
 
 
-/// Encode command.
 void cr::video::VSource::encodeCommand(uint8_t* data,
                                    int& size,
                                    cr::video::VSourceCommand id)
@@ -351,7 +391,6 @@ void cr::video::VSource::encodeCommand(uint8_t* data,
 
 
 
-/// Decode command.
 int cr::video::VSource::decodeCommand(uint8_t* data,
                                   int size,
                                   cr::video::VSourceParam& paramId,
@@ -391,5 +430,3 @@ int cr::video::VSource::decodeCommand(uint8_t* data,
 
     return -1;
 }
-
-
