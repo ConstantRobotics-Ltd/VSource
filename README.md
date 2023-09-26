@@ -4,7 +4,7 @@
 
 # **VSource interface C++ library**
 
-**v1.5.0**
+**v1.6.0**
 
 
 
@@ -65,6 +65,7 @@
 | 1.3.2   | 06.07.2023   | - Frame library version updated.                             |
 | 1.4.0   | 11.07.2023   | - Added VSourceParamsMask structure.<br />- Added params mask in encode(...) method of VSourceParams class. |
 | 1.5.0   | 22.09.2023   | - Updated encode(...) and decode(...) methods of VSourceParams.<br />- Added decodeAndExecuteCommand(...) method.<br />- Added example of video source implementation. |
+| 1.6.0   | 26.09.2023   | - Signature of getParams(...) method changed.                |
 
 
 
@@ -134,7 +135,7 @@ public:
     virtual float getParam(VSourceParam id) = 0;
 
     /// Get video source params structure.
-    virtual VSourceParams getParams() = 0;
+    virtual void getParams(VSourceParams& params) = 0;
 
     /// Execute command.
     virtual bool executeCommand(VSourceCommand id) = 0;
@@ -289,13 +290,15 @@ virtual float getParam(VSourceParam id) = 0;
 
 ## getParams method
 
-**getParams(...)** method designed to obtain video source params structures. The particular implementation of the video source must provide thread-safe **getParams(...)** method call. This means that the **getParams(...)** method can be safely called from any thread. Method declaration:
+**getParams(...)** method designed to obtain video source params structure. The particular implementation of the video source must provide thread-safe **getParams(...)** method call. This means that the **getParams(...)** method can be safely called from any thread. Method declaration:
 
 ```cpp
-virtual VSourceParams getParams() = 0;
+virtual void getParams(VSourceParams& params) = 0;
 ```
 
-**Returns:** video source parameters structure (see [**VSourceParams class**](#VSourceParams-class-description) description).
+| Parameter | Description                                       |
+| --------- | ------------------------------------------------- |
+| params    | Video source params class object (VSourceParams). |
 
 
 
@@ -945,7 +948,7 @@ public:
     float getParam(VSourceParam id);
 
     /// Get video source params structure.
-    VSourceParams getParams();
+    void getParams(VSourceParams& params);
 
     /// Execute command.
     bool executeCommand(VSourceCommand id);

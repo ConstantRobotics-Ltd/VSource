@@ -43,7 +43,7 @@ public:
     float getParam(VSourceParam id);
 
     /// Get video source params structure.
-    VSourceParams getParams();
+    void getParams(VSourceParams& params);
 
     /// Execute command.
     bool executeCommand(VSourceCommand id);

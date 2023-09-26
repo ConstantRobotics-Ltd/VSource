@@ -246,9 +246,9 @@ float cr::video::CustomVSource::getParam(VSourceParam id)
 
 
 
-cr::video::VSourceParams cr::video::CustomVSource::getParams()
+void cr::video::CustomVSource::getParams(VSourceParams& params)
 {
-    return m_params;
+    params = m_params;
 }
 
 

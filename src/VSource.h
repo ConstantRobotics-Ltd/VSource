@@ -262,9 +262,9 @@ public:
 
     /**
      * @brief Get video source params structure.
-     * @return Video source parameters structure.
+     * @param params Video source params class object.
      */
-    virtual VSourceParams getParams() = 0;
+    virtual void getParams(VSourceParams& params) = 0;
 
     /**
      * @brief Execute command.
