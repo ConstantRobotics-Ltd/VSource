@@ -339,7 +339,7 @@ static void encodeSetParamCommand(uint8_t* data, int& size, VSourceParam id, flo
 | ---- | ----- | -------------------------------------------------- |
 | 0    | 0x01  | SET_PARAM command header value.                    |
 | 1    | 0x01  | Major version of VSource class.                    |
-| 2    | 0x05  | Minor version of VSource class.                    |
+| 2    | 0x06  | Minor version of VSource class.                    |
 | 3    | id    | Parameter ID **int32_t** in Little-endian format.  |
 | 4    | id    | Parameter ID **int32_t** in Little-endian format.  |
 | 5    | id    | Parameter ID **int32_t** in Little-endian format.  |
@@ -384,7 +384,7 @@ static void encodeCommand(uint8_t* data, int& size, VSourceCommand id);
 | ---- | ----- | ----------------------------------------------- |
 | 0    | 0x00  | COMMAND header value.                           |
 | 1    | 0x01  | Major version of VSource class.                 |
-| 2    | 0x05  | Minor version of VSource class.                 |
+| 2    | 0x06  | Minor version of VSource class.                 |
 | 3    | id    | Command ID **int32_t** in Little-endian format. |
 | 4    | id    | Command ID **int32_t** in Little-endian format. |
 | 5    | id    | Command ID **int32_t** in Little-endian format. |
