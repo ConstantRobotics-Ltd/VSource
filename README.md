@@ -4,7 +4,7 @@
 
 # **VSource interface C++ library**
 
-**v1.6.0**
+**v1.6.1**
 
 
 
@@ -66,6 +66,7 @@
 | 1.4.0   | 11.07.2023   | - Added VSourceParamsMask structure.<br />- Added params mask in encode(...) method of VSourceParams class. |
 | 1.5.0   | 22.09.2023   | - Updated encode(...) and decode(...) methods of VSourceParams.<br />- Added decodeAndExecuteCommand(...) method.<br />- Added example of video source implementation. |
 | 1.6.0   | 26.09.2023   | - Signature of getParams(...) method changed.                |
+| 1.6.1   | 13.11.2023   | - Frame class updated.                                       |
 
 
 
