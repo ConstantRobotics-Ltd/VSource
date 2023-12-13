@@ -4,7 +4,7 @@
 
 # **VSource interface C++ library**
 
-**v1.6.1**
+**v1.7.1**
 
 
 
@@ -67,6 +67,7 @@
 | 1.5.0   | 22.09.2023   | - Updated encode(...) and decode(...) methods of VSourceParams.<br />- Added decodeAndExecuteCommand(...) method.<br />- Added example of video source implementation. |
 | 1.6.0   | 26.09.2023   | - Signature of getParams(...) method changed.                |
 | 1.6.1   | 13.11.2023   | - Frame class updated.                                       |
+| 1.7.1   | 13.12.2023   | - Virtual destructor added.                                       |
 
 
 
@@ -111,6 +112,10 @@ src ------------------------------ Folder with source code of the library.
 class VSource
 {
 public:
+
+    /// Class destructor.
+    virtual ~VSource();
+    
     /// Get string of current library version.
     static std::string getVersion();
 
@@ -180,7 +185,7 @@ std::cout << "VSource class version: " << VSource::getVersion() << std::endl;
 Console output:
 
 ```bash
-VSource class version: 1.5.0
+VSource class version: 1.7.1
 ```
 
 
