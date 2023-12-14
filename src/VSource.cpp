@@ -9,6 +9,13 @@ using namespace cr::video;
 
 
 
+VSource::~VSource()
+{
+
+}
+
+
+
 std::string VSource::getVersion()
 {
     return VSOURCE_VERSION;
