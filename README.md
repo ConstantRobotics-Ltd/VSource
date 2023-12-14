@@ -67,7 +67,7 @@
 | 1.5.0   | 22.09.2023   | - Updated encode(...) and decode(...) methods of VSourceParams.<br />- Added decodeAndExecuteCommand(...) method.<br />- Added example of video source implementation. |
 | 1.6.0   | 26.09.2023   | - Signature of getParams(...) method changed.                |
 | 1.6.1   | 13.11.2023   | - Frame class updated.                                       |
-| 1.7.1   | 13.12.2023   | - Virtual destructor added.                                       |
+| 1.7.1   | 14.12.2023   | - Virtual destructor added.<br />- Frame class updated.      |
 
 
 
