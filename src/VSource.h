@@ -203,6 +203,11 @@ class VSource
 public:
 
     /**
+     * @brief Class destructor.
+     */
+    virtual ~VSource();
+
+    /**
      * @brief Get string of current library version.
      * @return String of current library version.
      */
