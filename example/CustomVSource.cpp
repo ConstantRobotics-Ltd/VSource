@@ -144,6 +144,26 @@ bool cr::video::CustomVSource::setParam(VSourceParam id, float value)
         // Read only param.
         return false;
     }
+    case cr::video::VSourceParam::ROI_X:
+    {
+        m_params.roiX = (int)value;
+        return true;
+    }
+    case cr::video::VSourceParam::ROI_Y:
+    {
+        m_params.roiY = (int)value;
+        return true;
+    }
+    case cr::video::VSourceParam::ROI_WIDTH:
+    {
+        m_params.roiWidth = (int)value;
+        return true;
+    }
+    case cr::video::VSourceParam::ROI_HEIGHT:
+    {
+        m_params.roiHeight = (int)value;
+        return true;
+    }
     case cr::video::VSourceParam::CUSTOM_1:
     {
         m_params.custom1 = value;
@@ -223,6 +243,22 @@ float cr::video::CustomVSource::getParam(VSourceParam id)
     {
         return m_params.isOpen ? 1.0f : 0.0f;
     }
+    case cr::video::VSourceParam::ROI_X:
+    {
+        return (float)m_params.roiX;
+    }
+    case cr::video::VSourceParam::ROI_Y:
+    {
+        return (float)m_params.roiY;
+    }
+    case cr::video::VSourceParam::ROI_WIDTH:
+    {
+        return (float)m_params.roiWidth;
+    }
+    case cr::video::VSourceParam::ROI_HEIGHT:
+    {
+        return (float)m_params.roiHeight;
+    }
     case cr::video::VSourceParam::CUSTOM_1:
     {
         return m_params.custom1;
@@ -299,10 +335,3 @@ bool cr::video::CustomVSource::decodeAndExecuteCommand(uint8_t* data, int size)
 
     return false;
 }
-
-
-
-
-
-
-
