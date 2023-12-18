@@ -25,6 +25,10 @@ typedef struct VSourceParamsMask
     bool cycleTimeMks{true};
     bool fps{true};
     bool isOpen{true};
+    bool roiX{true};
+    bool roiY{true};
+    bool roiWidth{true};
+    bool roiHeight{true};
     bool custom1{true};
     bool custom2{true};
     bool custom3{true};
@@ -81,6 +85,14 @@ public:
     float fps{0};
     /// Open flag. 0 - not open, 1 - open.
     bool isOpen{false};
+    /// Region of intrest upper left corner x coordinate.
+    int roiX{0};
+    /// Region of intrest upper left corner y coordinate.
+    int roiY{0};
+    /// Region of intrest width.
+    int roiWidth{0};
+    /// Region of intrest heigth.
+    int roiHeight{0};
     /// Custom parameter. Depends on implementation.
     float custom1{0.0f};
     /// Custom parameter. Depends on implementation.
@@ -98,6 +110,10 @@ public:
                   exposureMode,
                   focusMode,
                   fps,
+                  roiX,
+                  roiY,
+                  roiWidth,
+                  roiHeight,
                   custom1,
                   custom2,
                   custom3);
@@ -174,6 +190,14 @@ enum class VSourceParam
     FPS,
     /// [read only] Open flag. 0 - not open, 1 - open.
     IS_OPEN,
+    /// Region of intrest upper left corner x coordinate.
+    ROI_X,
+    /// Region of intrest upper left corner x coordinate.
+    ROI_Y,
+    /// Region of intrest upper left corner x coordinate.
+    ROI_WIDTH,
+    /// Region of intrest upper left corner x coordinate.
+    ROI_HEIGHT,
     /// [read/write] Custom parameter. Depends on implementation.
     CUSTOM_1,
     /// [read/write] Custom parameter. Depends on implementation.
@@ -323,7 +347,3 @@ public:
 
 }
 }
-
-
-
-
