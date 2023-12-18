@@ -192,11 +192,11 @@ enum class VSourceParam
     IS_OPEN,
     /// Region of intrest upper left corner x coordinate.
     ROI_X,
-    /// Region of intrest upper left corner x coordinate.
+    /// Region of intrest upper left corner y coordinate.
     ROI_Y,
-    /// Region of intrest upper left corner x coordinate.
+    /// Region of intrest width.
     ROI_WIDTH,
-    /// Region of intrest upper left corner x coordinate.
+    /// Region of intrest height.
     ROI_HEIGHT,
     /// [read/write] Custom parameter. Depends on implementation.
     CUSTOM_1,
