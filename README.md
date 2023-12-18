@@ -4,7 +4,7 @@
 
 # **VSource interface C++ library**
 
-**v1.8.1**
+**v1.8.0**
 
 
 
@@ -68,7 +68,7 @@
 | 1.6.0   | 26.09.2023   | - Signature of getParams(...) method changed.                |
 | 1.6.1   | 13.11.2023   | - Frame class updated.                                       |
 | 1.7.1   | 14.12.2023   | - Virtual destructor added.<br />- Frame class updated.      |
-| 1.8.1   | 18.12.2023   | - Region of intrest params included.      |
+| 1.8.0   | 18.12.2023   | - Region of intrest params included.      |
 
 
 
@@ -186,7 +186,7 @@ std::cout << "VSource class version: " << VSource::getVersion() << std::endl;
 Console output:
 
 ```bash
-VSource class version: 1.8.1
+VSource class version: 1.8.0
 ```
 
 
