@@ -44,6 +44,10 @@ VSourceParams &VSourceParams::operator= (const VSourceParams &src)
     cycleTimeMks = src.cycleTimeMks;
     fps = src.fps;
     isOpen = src.isOpen;
+    roiX = src.roiX;
+    roiY = src.roiY;
+    roiWidth = src.roiWidth;
+    roiHeight = src.roiHeight;
     custom1 = src.custom1;
     custom2 = src.custom2;
     custom3 = src.custom3;
@@ -57,126 +61,297 @@ bool VSourceParams::encode(uint8_t* data, int bufferSize, int& size,
                            VSourceParamsMask* mask)
 {
     // Check buffer size.
-    if (bufferSize < 62)
+    if (bufferSize < 7)
     {
         size = 0;
         return false;
     }
 
-    // Encode version.
     int pos = 0;
-    data[pos] = 0x02; pos += 1;
-    data[pos] = VSOURCE_MAJOR_VERSION; pos += 1;
-    data[pos] = VSOURCE_MINOR_VERSION; pos += 1;
+    // Header.
+    data[0] = 0x02;
+    // Encode version.
+    data[1] = VSOURCE_MAJOR_VERSION;
+    data[2] = VSOURCE_MINOR_VERSION;
+    // Prepare mask. Each flag is set after param is copied to buffer.
+    data[3] = 0;
+    data[4] = 0;
+    data[5] = 0;
+    pos = 6;
 
     if (mask == nullptr)
-    {
-        // Prepare mask.
-        data[pos] = 0xFF; pos += 1;
-        data[pos] = 0xFF; pos += 1;
-
+    {    
         // Encode data.
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &logLevel, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)128;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &width, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)64;
+        
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &height, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)32;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &gainMode, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)16;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &gain, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)8;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &exposureMode, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)4;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &exposure, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)2;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &focusMode, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)1;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &focusPos, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)128;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &cycleTimeMks, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)64;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
         memcpy(&data[pos], &fps, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)32;
+
+        if(bufferSize < pos + 1)
+        {
+            size = pos;
+            return true;
+        }
         data[pos] = isOpen == true ? 0x01 : 0x00; pos += 1;
+        data[4] = data[4] | (uint8_t)16;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
+        memcpy(&data[pos], &roiX, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)8;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
+        memcpy(&data[pos], &roiY, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)4;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }
+        memcpy(&data[pos], &roiWidth, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)2;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }    
+        memcpy(&data[pos], &roiHeight, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)1;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }   
         memcpy(&data[pos], &custom1, 4); pos += 4;
+        data[5] = data[5] | (uint8_t)128;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }   
         memcpy(&data[pos], &custom2, 4); pos += 4;
+        data[5] = data[5] | (uint8_t)64;
+
+        if(bufferSize < pos + 4)
+        {
+            size = pos;
+            return true;
+        }   
         memcpy(&data[pos], &custom3, 4); pos += 4;
+        data[5] = data[5] | (uint8_t)32;
 
         size = pos;
 
         return true;
     }
 
-    // Prepare mask.
-    data[pos] = 0;
-    data[pos] = data[pos] | (mask->logLevel ? (uint8_t)128 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->width ? (uint8_t)64 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->height ? (uint8_t)32 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->gainMode ? (uint8_t)16 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->gain ? (uint8_t)8 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->exposureMode ? (uint8_t)4 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->exposure ? (uint8_t)2 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->focusMode ? (uint8_t)1 : (uint8_t)0);
-    pos += 1;
-    data[pos] = 0;
-    data[pos] = data[pos] | (mask->focusPos ? (uint8_t)128 :(uint8_t)0);
-    data[pos] = data[pos] | (mask->cycleTimeMks ? (uint8_t)64 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->fps ? (uint8_t)32 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->isOpen ? (uint8_t)16 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->custom1 ? (uint8_t)8 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->custom2 ? (uint8_t)4 : (uint8_t)0);
-    data[pos] = data[pos] | (mask->custom3 ? (uint8_t)2 : (uint8_t)0);
-    pos += 1;
 
-    if (mask->logLevel)
+    if (mask->logLevel && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &logLevel, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)128;
     }
-    if (mask->width)
+
+    if (mask->width && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &width, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)64;
     }
-    if (mask->height)
+
+    if (mask->height && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &height, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)32;
     }
-    if (mask->gainMode)
+
+    if (mask->gainMode && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &gainMode, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)16;
     }
-    if (mask->gain)
+
+    if (mask->gain && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &gain, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)8;
     }
-    if (mask->exposureMode)
+
+    if (mask->exposureMode && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &exposureMode, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)4;
     }
-    if (mask->exposure)
+
+    if (mask->exposure && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &exposure, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)2;
     }
-    if (mask->focusMode)
+
+    if (mask->focusMode && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &focusMode, 4); pos += 4;
+        data[3] = data[3] | (uint8_t)1;
     }
-    if (mask->focusPos)
+
+    if (mask->focusPos && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &focusPos, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)128;
     }
-    if (mask->cycleTimeMks)
+
+    if (mask->cycleTimeMks && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &cycleTimeMks, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)64;
     }
-    if (mask->fps)
+
+    if (mask->fps && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &fps, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)32;
     }
-    if (mask->isOpen)
+
+    if (mask->isOpen && (bufferSize > pos + 1))
     {
         data[pos] = isOpen == true ? 0x01 : 0x00; pos += 1;
+        data[4] = data[4] | (uint8_t)16;
     }
-    if (mask->custom1)
+
+    if (mask->roiX && (bufferSize > pos + 4))
+    {
+        memcpy(&data[pos], &roiX, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)8;
+    }
+
+    if (mask->roiY && (bufferSize > pos + 4))
+    {
+        memcpy(&data[pos], &roiY, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)4;
+    }
+
+    if (mask->roiWidth && (bufferSize > pos + 4))
+    {
+        memcpy(&data[pos], &roiWidth, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)2;
+    }
+
+    if (mask->roiHeight && (bufferSize > pos + 4))
+    {
+        memcpy(&data[pos], &roiHeight, 4); pos += 4;
+        data[4] = data[4] | (uint8_t)1;
+    }
+
+    if (mask->custom1 && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &custom1, 4); pos += 4;
+        data[5] = data[5] | (uint8_t)128;
     }
-    if (mask->custom2)
+
+    if (mask->custom2 && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &custom2, 4); pos += 4;
+        data[5] = data[5] | (uint8_t)64;
     }
-    if (mask->custom3)
+
+    if (mask->custom3 && (bufferSize > pos + 4))
     {
         memcpy(&data[pos], &custom3, 4); pos += 4;
+        data[5] = data[5] | (uint8_t)32;
     }
 
     size = pos;
@@ -189,7 +364,7 @@ bool VSourceParams::encode(uint8_t* data, int bufferSize, int& size,
 bool VSourceParams::decode(uint8_t* data, int dataSize)
 {
     // Check data size.
-    if (dataSize < 5)
+    if (dataSize < 6)
         return false;
 
     // Check header.
@@ -202,7 +377,9 @@ bool VSourceParams::decode(uint8_t* data, int dataSize)
     if (data[2] != VSOURCE_MINOR_VERSION)
         return false;
 
-    int pos = 5;
+    // Position where actual data stars after masks.
+    int pos = 6;
+
     if ((data[3] & (uint8_t)128) == (uint8_t)128)
     {
         if (dataSize < pos + 4)
@@ -329,13 +506,53 @@ bool VSourceParams::decode(uint8_t* data, int dataSize)
     {
         if (dataSize < pos + 4)
             return false;
+        memcpy(&roiX, &data[pos], 4); pos += 4;
+    }
+    else
+    {
+        roiX = 0;
+    }
+    if ((data[4] & (uint8_t)4) == (uint8_t)4)
+    {
+        if (dataSize < pos + 4)
+            return false;
+        memcpy(&roiY, &data[pos], 4); pos += 4;
+    }
+    else
+    {
+        roiY = 0;
+    }
+    if ((data[4] & (uint8_t)2) == (uint8_t)2)
+    {
+        if (dataSize < pos + 4)
+            return false;
+        memcpy(&roiWidth, &data[pos], 4); pos += 4;
+    }
+    else
+    {
+        roiWidth = 0;
+    }  
+    if ((data[4] & (uint8_t)1) == (uint8_t)1)
+    {
+        if (dataSize < pos + 4)
+            return false;
+        memcpy(&roiHeight, &data[pos], 4); pos += 4;
+    }
+    else
+    {
+        roiHeight = 0;
+    }  
+    if ((data[5] & (uint8_t)128) == (uint8_t)128)
+    {
+        if (dataSize < pos + 4)
+            return false;
         memcpy(&custom1, &data[pos], 4); pos += 4;
     }
     else
     {
         custom1 = 0.0f;
     }
-    if ((data[4] & (uint8_t)4) == (uint8_t)4)
+    if ((data[5] & (uint8_t)64) == (uint8_t)64)
     {
         if (dataSize < pos + 4)
             return false;
@@ -345,7 +562,7 @@ bool VSourceParams::decode(uint8_t* data, int dataSize)
     {
         custom2 = 0.0f;
     }
-    if ((data[4] & (uint8_t)2) == (uint8_t)2)
+    if ((data[5] & (uint8_t)32) == (uint8_t)32)
     {
         if (dataSize < pos + 4)
             return false;
