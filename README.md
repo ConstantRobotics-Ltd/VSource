@@ -687,7 +687,7 @@ bool encode(uint8_t* data, int bufferSize, int& size, VSourceParamsMask* mask = 
 | ---------- | ------------------------------------------------------------ |
 | data       | Pointer to data buffer. Buffer size should be at least **78** bytes. |
 | size       | Size of encoded data. 78 bytes by default.                   |
-| bufferSize | Data buffer size. Buffer size must be >= 62 bytes.           |
+| bufferSize | Data buffer size. If buffer size smaller than required, buffer will be filled with fewer parameters.           |
 | mask       | Parameters mask - pointer to **VSourceParamsMask** structure. **VSourceParamsMask** (declared in VSource.h file) determines flags for each field (parameter) declared in **VSourceParams** class. If the user wants to exclude any parameters from serialization, he can put a pointer to the mask. If the user wants to exclude a particular parameter from serialization, he should set the corresponding flag in the VSourceParamsMask structure. |
 
 **VSourceParamsMask** structure declaration:
