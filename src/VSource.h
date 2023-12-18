@@ -11,7 +11,7 @@ namespace video
 /**
  * @brief Video source params mask structure.
  */
-typedef struct VSourceParamsMask
+struct VSourceParamsMask
 {
     bool logLevel{true};
     bool width{true};
@@ -32,7 +32,7 @@ typedef struct VSourceParamsMask
     bool custom1{true};
     bool custom2{true};
     bool custom3{true};
-} VSourceParamsMask;
+};
 
 
 
