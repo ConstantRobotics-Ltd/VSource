@@ -4,7 +4,7 @@
 
 # **VSource interface C++ library**
 
-**v1.7.1**
+**v1.8.1**
 
 
 
@@ -68,6 +68,7 @@
 | 1.6.0   | 26.09.2023   | - Signature of getParams(...) method changed.                |
 | 1.6.1   | 13.11.2023   | - Frame class updated.                                       |
 | 1.7.1   | 14.12.2023   | - Virtual destructor added.<br />- Frame class updated.      |
+| 1.8.1   | 18.12.2023   | - Region of intrest params included.      |
 
 
 
@@ -185,7 +186,7 @@ std::cout << "VSource class version: " << VSource::getVersion() << std::endl;
 Console output:
 
 ```bash
-VSource class version: 1.7.1
+VSource class version: 1.8.1
 ```
 
 
@@ -515,6 +516,14 @@ enum class VSourceParam
     FPS,
     /// [read only] Open flag. 0 - not open, 1 - open.
     IS_OPEN,
+    /// Region of intrest upper left corner x coordinate.
+    ROI_X,
+    /// Region of intrest upper left corner x coordinate.
+    ROI_Y,
+    /// Region of intrest upper left corner x coordinate.
+    ROI_WIDTH,
+    /// Region of intrest upper left corner x coordinate.
+    ROI_HEIGHT,
     /// [read/write] Custom parameter. Depends on implementation.
     CUSTOM_1,
     /// [read/write] Custom parameter. Depends on implementation.
@@ -540,6 +549,10 @@ enum class VSourceParam
 | CYCLE_TIME_MKS | read only    | Video capture cycle time. **VSource** class sets this value automatically. This parameter means time interval between two captured video frame. |
 | FPS            | read / write | FPS. User can set frame FPS before initialization or after. Some video source classes may set FPS automatically. |
 | IS_OPEN        | read only    | Open flag. 0 - not open, 1 - open.                           |
+| ROI_X          | read / write | Region of intrest x coordinate.                              |
+| ROI_Y          | read / write | Region of intrest y coordinate.                              |
+| ROI_WIDTH      | read / write | Region of intrest width.                                     |
+| ROI_HEIGHT     | read / write | Region of intrest heigth.                                    |
 | CUSTOM_1       | read / write | Custom parameter. Depends on implementation.                 |
 | CUSTOM_2       | read / write | Custom parameter. Depends on implementation.                 |
 | CUSTOM_3       | read / write | Custom parameter. Depends on implementation.                 |
@@ -601,6 +614,14 @@ public:
     float fps{0};
     /// Open flag. 0 - not open, 1 - open.
     bool isOpen{false};
+    /// Region of intrest upper left corner x coordinate.
+    int roiX{0};
+    /// Region of intrest upper left corner y coordinate.
+    int roiY{0};
+    /// Region of intrest width.
+    int roiWidth{0};
+    /// Region of intrest heigth.
+    int roiHeight{0};
     /// Custom parameter. Depends on implementation.
     float custom1{0.0f};
     /// Custom parameter. Depends on implementation.
@@ -642,6 +663,10 @@ public:
 | cycleTimeMks | int    | Video capture cycle time. **VSource** class sets this value automatically. This parameter means time interval between two captured video frame. |
 | fps          | float  | FPS. User can set frame FPS before initialization or after. Some video source classes may set FPS automatically. |
 | isOpen       | bool   | Open flag. false - not open, true - open.                    |
+| roiX         | int    | Region of intrest x coordinate.                              |
+| roiY         | int    | Region of intrest y coordinate.                              |
+| roiWidth     | int    | Region of intrest width.                                     |
+| roiHeight    | int    | Region of intrest heigth.                                    |
 | custom1      | float  | Custom parameter. Depends on implementation.                 |
 | custom2      | float  | Custom parameter. Depends on implementation.                 |
 | custom3      | float  | Custom parameter. Depends on implementation.                 |
@@ -660,15 +685,15 @@ bool encode(uint8_t* data, int bufferSize, int& size, VSourceParamsMask* mask = 
 
 | Parameter  | Value                                                        |
 | ---------- | ------------------------------------------------------------ |
-| data       | Pointer to data buffer. Buffer size should be at least **62** bytes. |
-| size       | Size of encoded data. 62 bytes by default.                   |
+| data       | Pointer to data buffer. Buffer size should be at least **78** bytes. |
+| size       | Size of encoded data. 78 bytes by default.                   |
 | bufferSize | Data buffer size. Buffer size must be >= 62 bytes.           |
 | mask       | Parameters mask - pointer to **VSourceParamsMask** structure. **VSourceParamsMask** (declared in VSource.h file) determines flags for each field (parameter) declared in **VSourceParams** class. If the user wants to exclude any parameters from serialization, he can put a pointer to the mask. If the user wants to exclude a particular parameter from serialization, he should set the corresponding flag in the VSourceParamsMask structure. |
 
 **VSourceParamsMask** structure declaration:
 
 ```cpp
-typedef struct VSourceParamsMask
+struct VSourceParamsMask
 {
     bool logLevel{true};
     bool width{true};
@@ -682,10 +707,14 @@ typedef struct VSourceParamsMask
     bool cycleTimeMks{true};
     bool fps{true};
     bool isOpen{true};
+    bool roiX{true};
+    bool roiY{true};
+    bool roiWidth{true};
+    bool roiHeight{true};
     bool custom1{true};
     bool custom2{true};
     bool custom3{true};
-} VSourceParamsMask;
+};
 ```
 
 Example without parameters mask:
@@ -783,18 +812,22 @@ if(!outConfig.readFromFile("TestVSourceParams.json"))
 ```json
 {
     "vSourceParams": {
-        "custom1": 96.0,
-        "custom2": 212.0,
-        "custom3": 243.0,
-        "exposureMode": 63,
-        "focusMode": 167,
+        "custom1": 150.0,
+        "custom2": 252.0,
+        "custom3": 30.0,
+        "exposureMode": 226,
+        "focusMode": 89,
         "fourcc": "skdfjhvk",
-        "fps": 205.0,
-        "gainMode": 84,
-        "height": 143,
-        "logLevel": 92,
+        "fps": 206.0,
+        "gainMode": 180,
+        "height": 61,
+        "logLevel": 17,
+        "roiHeight": 249,
+        "roiWidth": 167,
+        "roiX": 39,
+        "roiY": 223,
         "source": "alsfghljb",
-        "width": 204
+        "width": 35
     }
 }
 ```
@@ -970,4 +1003,3 @@ private:
     Frame m_outputFrame;
 };
 ```
-
