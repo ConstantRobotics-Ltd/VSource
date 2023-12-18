@@ -95,6 +95,10 @@ bool copyTest()
     in.width = rand() % 255;
     in.height = rand() % 255;
     in.isOpen = true;
+    in.roiX = rand() % 255;
+    in.roiY = rand() % 255;
+    in.roiWidth = rand() % 255;
+    in.roiHeight = rand() % 255;
     in.custom1 = rand() % 255;
     in.custom2 = rand() % 255;
     in.custom3 = rand() % 255;
@@ -173,6 +177,26 @@ bool copyTest()
         cout << "in.isOpen" << endl;
         return false;
     }
+    if (in.roiX != out.roiX)
+    {
+        cout << "in.roiX" << endl;
+        return false;
+    }
+    if (in.roiY != out.roiY)
+    {
+        cout << "in.roiY" << endl;
+        return false;
+    }
+    if (in.roiWidth != out.roiWidth)
+    {
+        cout << "in.roiWidth" << endl;
+        return false;
+    }
+    if (in.roiHeight != out.roiHeight)
+    {
+        cout << "in.roiHeight" << endl;
+        return false;
+    }
     if (in.custom1 != out.custom1)
     {
         cout << "in.custom1" << endl;
@@ -213,6 +237,10 @@ bool encodeDecodeTest()
     in.width = rand() % 255;
     in.height = rand() % 255;
     in.isOpen = true;
+    in.roiX = rand() % 255;
+    in.roiY = rand() % 255;
+    in.roiWidth = rand() % 255;
+    in.roiHeight = rand() % 255;
     in.custom1 = rand() % 255;
     in.custom2 = rand() % 255;
     in.custom3 = rand() % 255;
@@ -301,6 +329,26 @@ bool encodeDecodeTest()
     if (in.isOpen != out.isOpen)
     {
         cout << "in.isOpen" << endl;
+        return false;
+    }
+    if (in.roiX != out.roiX)
+    {
+        cout << "in.roiX" << endl;
+        return false;
+    }
+    if (in.roiY != out.roiY)
+    {
+        cout << "in.roiY" << endl;
+        return false;
+    }
+    if (in.roiWidth != out.roiWidth)
+    {
+        cout << "in.roiWidth" << endl;
+        return false;
+    }
+    if (in.roiHeight != out.roiHeight)
+    {
+        cout << "in.roiHeight" << endl;
         return false;
     }
     if (in.custom1 != out.custom1)
@@ -398,6 +446,10 @@ bool jsonReadWriteTest()
     in.width = rand() % 255;
     in.height = rand() % 255;
     in.isOpen = true;
+    in.roiX = rand() % 255;
+    in.roiY = rand() % 255;
+    in.roiWidth = rand() % 255;
+    in.roiHeight = rand() % 255;
     in.custom1 = rand() % 255;
     in.custom2 = rand() % 255;
     in.custom3 = rand() % 255;
@@ -469,6 +521,26 @@ bool jsonReadWriteTest()
         cout << "in.height" << endl;
         result = false;
     }
+    if (in.roiX != out.roiX)
+    {
+        cout << "in.roiX" << endl;
+        return false;
+    }
+    if (in.roiY != out.roiY)
+    {
+        cout << "in.roiY" << endl;
+        return false;
+    }
+    if (in.roiWidth != out.roiWidth)
+    {
+        cout << "in.roiWidth" << endl;
+        return false;
+    }
+    if (in.roiHeight != out.roiHeight)
+    {
+        cout << "in.roiHeight" << endl;
+        return false;
+    }
     if (in.custom1 != out.custom1)
     {
         cout << "in.custom1" << endl;
@@ -509,6 +581,10 @@ bool encodeDecodeWithMaskTest()
     in.width = rand() % 255;
     in.height = rand() % 255;
     in.isOpen = true;
+    in.roiX = rand() % 255;
+    in.roiY = rand() % 255;
+    in.roiWidth = rand() % 255;
+    in.roiHeight = rand() % 255;
     in.custom1 = rand() % 255;
     in.custom2 = rand() % 255;
     in.custom3 = rand() % 255;
@@ -527,6 +603,10 @@ bool encodeDecodeWithMaskTest()
     mask.width = false;
     mask.height = true;
     mask.isOpen = false;
+    mask.roiX = true;
+    mask.roiY = false;
+    mask.roiWidth = true;
+    mask.roiHeight = false;
     mask.custom1 = true;
     mask.custom2 = false;
     mask.custom3 = true;
@@ -617,6 +697,27 @@ bool encodeDecodeWithMaskTest()
         cout << "in.isOpen" << endl;
         return false;
     }
+
+    if (in.roiX != out.roiX)
+    {
+        cout << "in.roiX" << endl;
+        return false;
+    }
+    if (0 != out.roiY)
+    {
+        cout << "in.roiY" << endl;
+        return false;
+    }
+    if (in.roiWidth != out.roiWidth)
+    {
+        cout << "in.roiWidth" << endl;
+        return false;
+    }
+    if (0 != out.roiHeight)
+    {
+        cout << "in.roiHeight" << endl;
+        return false;
+    }
     if (in.custom1 != out.custom1)
     {
         cout << "in.custom1" << endl;
@@ -635,17 +736,3 @@ bool encodeDecodeWithMaskTest()
 
     return true;
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
