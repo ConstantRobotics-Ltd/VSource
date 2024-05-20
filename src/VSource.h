@@ -100,23 +100,9 @@ public:
     /// Custom parameter. Depends on implementation.
     float custom3{0.0f};
 
-    JSON_READABLE(VSourceParams,
-                  logLevel,
-                  source,
-                  fourcc,
-                  width,
-                  height,
-                  gainMode,
-                  exposureMode,
-                  focusMode,
-                  fps,
-                  roiX,
-                  roiY,
-                  roiWidth,
-                  roiHeight,
-                  custom1,
-                  custom2,
-                  custom3);
+    JSON_READABLE(VSourceParams, logLevel, source, fourcc, width, height,
+                  gainMode, exposureMode, focusMode, fps, roiX, roiY, roiWidth,
+                  roiHeight, custom1, custom2, custom3);
 
     /**
      * @brief operator =
