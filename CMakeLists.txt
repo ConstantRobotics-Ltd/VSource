@@ -30,8 +30,8 @@ endif()
 ## project configuration
 ################################################################################
 SET(${PARENT}_VSOURCE                        ON  CACHE BOOL "" ${REWRITE_FORCE})
-SET(${PARENT}_VSOURCE_TEST                   ON  CACHE BOOL "" ${REWRITE_FORCE})
-SET(${PARENT}_VSOURCE_EXAMPLE                ON  CACHE BOOL "" ${REWRITE_FORCE})
+SET(${PARENT}_VSOURCE_TEST                   OFF CACHE BOOL "" ${REWRITE_FORCE})
+SET(${PARENT}_VSOURCE_EXAMPLE                OFF CACHE BOOL "" ${REWRITE_FORCE})
 
 
 
