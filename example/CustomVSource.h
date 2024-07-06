@@ -22,34 +22,34 @@ public:
     static std::string getVersion();
 
     /// Open video source.
-    bool openVSource(std::string& initString);
+    bool openVSource(std::string& initString) override;
 
     /// Init video source.
-    bool initVSource(VSourceParams& params);
+    bool initVSource(VSourceParams& params) override;
 
     /// Get open status.
-    bool isVSourceOpen();
+    bool isVSourceOpen() override;
 
     /// Close video source.
-    void closeVSource();
+    void closeVSource() override;
 
     /// Get new video frame.
-    bool getFrame(Frame& frame, int32_t timeoutMsec = 0);
+    bool getFrame(Frame& frame, int32_t timeoutMsec = 0) override;
 
     /// Set video source param.
-    bool setParam(VSourceParam id, float value);
+    bool setParam(VSourceParam id, float value) override;
 
     /// Get video source param value.
-    float getParam(VSourceParam id);
+    float getParam(VSourceParam id) override;
 
     /// Get video source params structure.
-    void getParams(VSourceParams& params);
+    void getParams(VSourceParams& params) override;
 
     /// Execute command.
-    bool executeCommand(VSourceCommand id);
+    bool executeCommand(VSourceCommand id) override;
 
     /// Decode and execute command.
-    bool decodeAndExecuteCommand(uint8_t* data, int size);
+    bool decodeAndExecuteCommand(uint8_t* data, int size) override;
 
 private:
 

@@ -91,7 +91,7 @@ bool copyTest()
     in.gain = rand() % 255;
     in.focusMode = rand() % 255;
     in.focusPos = rand() % 255;
-    in.fps = rand() % 255;
+    in.fps = (float)(rand() % 255);
     in.width = rand() % 255;
     in.height = rand() % 255;
     in.isOpen = true;
@@ -99,9 +99,9 @@ bool copyTest()
     in.roiY = rand() % 255;
     in.roiWidth = rand() % 255;
     in.roiHeight = rand() % 255;
-    in.custom1 = rand() % 255;
-    in.custom2 = rand() % 255;
-    in.custom3 = rand() % 255;
+    in.custom1 = (float)(rand() % 255);
+    in.custom2 = (float)(rand() % 255);
+    in.custom3 = (float)(rand() % 255);
 
     // Copy params.
     VSourceParams out = in;
@@ -233,7 +233,7 @@ bool encodeDecodeTest()
     in.gain = rand() % 255;
     in.focusMode = rand() % 255;
     in.focusPos = rand() % 255;
-    in.fps = rand() % 255;
+    in.fps = (float)(rand() % 255);
     in.width = rand() % 255;
     in.height = rand() % 255;
     in.isOpen = true;
@@ -241,9 +241,9 @@ bool encodeDecodeTest()
     in.roiY = rand() % 255;
     in.roiWidth = rand() % 255;
     in.roiHeight = rand() % 255;
-    in.custom1 = rand() % 255;
-    in.custom2 = rand() % 255;
-    in.custom3 = rand() % 255;
+    in.custom1 = (float)(rand() % 255);
+    in.custom2 = (float)(rand() % 255);
+    in.custom3 = (float)(rand() % 255);
 
     // Encode data.
     uint8_t data[1024];
@@ -442,7 +442,7 @@ bool jsonReadWriteTest()
     in.gain = rand() % 255;
     in.focusMode = rand() % 255;
     in.focusPos = rand() % 255;
-    in.fps = rand() % 255;
+    in.fps = (float)(rand() % 255);
     in.width = rand() % 255;
     in.height = rand() % 255;
     in.isOpen = true;
@@ -450,9 +450,9 @@ bool jsonReadWriteTest()
     in.roiY = rand() % 255;
     in.roiWidth = rand() % 255;
     in.roiHeight = rand() % 255;
-    in.custom1 = rand() % 255;
-    in.custom2 = rand() % 255;
-    in.custom3 = rand() % 255;
+    in.custom1 = (float)(rand() % 255);
+    in.custom2 = (float)(rand() % 255);
+    in.custom3 = (float)(rand() % 255);
 
     // Write params to file.
     cr::utils::ConfigReader inConfig;
@@ -577,7 +577,7 @@ bool encodeDecodeWithMaskTest()
     in.gain = rand() % 255;
     in.focusMode = rand() % 255;
     in.focusPos = rand() % 255;
-    in.fps = rand() % 255;
+    in.fps = (float)(rand() % 255);
     in.width = rand() % 255;
     in.height = rand() % 255;
     in.isOpen = true;
@@ -585,9 +585,9 @@ bool encodeDecodeWithMaskTest()
     in.roiY = rand() % 255;
     in.roiWidth = rand() % 255;
     in.roiHeight = rand() % 255;
-    in.custom1 = rand() % 255;
-    in.custom2 = rand() % 255;
-    in.custom3 = rand() % 255;
+    in.custom1 = (float)(rand() % 255);
+    in.custom2 = (float)(rand() % 255);
+    in.custom3 = (float)(rand() % 255);
 
     // Prepare params mask.
     VSourceParamsMask mask;

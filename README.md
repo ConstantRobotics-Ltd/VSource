@@ -4,7 +4,7 @@
 
 # **VSource interface C++ library**
 
-**v1.8.3**
+**v1.8.4**
 
 
 
@@ -44,7 +44,7 @@
 
 # Overview
 
-**VSource** C++ library provides standard interface as well defines data structures and rules for different video source classes (video capture classes). **VSource** interface class doesn't do anything, just provides interface and provides methods to encode/decode commands and encode/decode params. Also **VSource** class provides data structures for video source parameters. Different video source classes inherit interface form **VSource** C++ class. **VSource.h** file contains contains list of data structures ([VSourceCommand enum](#vsourcecommand-enum), [VSourceParam enum](#vsourceparam-enum) and [VSourceParams class](#vsourceparams-class-description) class). [VSourceParams class](#vsourceparams-class-description) contains video source params and includes methods to encode and decode video source params.  [VSourceCommand enum](#vsourcecommand-enum) contains IDs of commands supported by **VSource** class. [VSourceParam enum](#vsourceparam-enum) contains IDs of params supported by **VSource** class. All video sources should include params and commands listed in **VSource.h** file. **VSource** class interface class depends on [Frame](https://rapidpixel.constantrobotics.com/docs/service-libraries/frame.html) class (describes video frame and video frame data structures, source code included, Apache 2.0 license) and [ConfigReader](https://rapidpixel.constantrobotics.com/docs/service-libraries/config-reader.html) library (provides methods to read/write JSON config files, source code included, Apache 2.0 license). It uses C++17 standard. The library is licensed under the **Apache 2.0** license.
+**VSource** C++ library provides standard interface as well defines data structures and rules for different video source classes (video capture classes). **VSource** interface class doesn't do anything, just provides interface and provides methods to encode/decode commands and encode/decode params. Also **VSource** class provides data structures for video source parameters. Different video source classes inherit interface form **VSource** C++ class. **VSource.h** file contains list of data structures ([VSourceCommand enum](#vsourcecommand-enum), [VSourceParam enum](#vsourceparam-enum) and [VSourceParams class](#vsourceparams-class-description) class). [VSourceParams class](#vsourceparams-class-description) contains video source params and includes methods to encode and decode params.  [VSourceCommand enum](#vsourcecommand-enum) contains IDs of commands supported by **VSource** class. [VSourceParam enum](#vsourceparam-enum) contains IDs of params supported by **VSource** class. All video sources should include params and commands listed in **VSource.h** file. **VSource** class interface class depends on [Frame](https://rapidpixel.constantrobotics.com/docs/service-libraries/frame.html) class (describes video frame data structures, source code included, Apache 2.0 license) and [ConfigReader](https://rapidpixel.constantrobotics.com/docs/service-libraries/config-reader.html) library (provides methods to read/write JSON config files, source code included, Apache 2.0 license). It uses C++17 standard. The library is licensed under the **Apache 2.0** license.
 
 
 
@@ -61,16 +61,17 @@
 | 1.2.0   | 01.07.2023   | - Added new methods to encode/decode commands.<br />- Tests updated.<br />- Documentation updated. |
 | 1.2.1   | 01.07.2023   | - Params description updated in source code.                 |
 | 1.3.0   | 05.07.2023   | - VSourceParams class updated (initString replaced by source).<br />- decode(...) method in VSourceParams class updated. |
-| 1.3.1   | 06.07.2023   | - gain, exposure and focusPos fields of VSourceParams excluded from JSOM reading/writing. |
+| 1.3.1   | 06.07.2023   | - gain, exposure and focusPos fields of VSourceParams excluded from JSON reading/writing. |
 | 1.3.2   | 06.07.2023   | - Frame library version updated.                             |
 | 1.4.0   | 11.07.2023   | - Added VSourceParamsMask structure.<br />- Added params mask in encode(...) method of VSourceParams class. |
 | 1.5.0   | 22.09.2023   | - Updated encode(...) and decode(...) methods of VSourceParams.<br />- Added decodeAndExecuteCommand(...) method.<br />- Added example of video source implementation. |
 | 1.6.0   | 26.09.2023   | - Signature of getParams(...) method changed.                |
 | 1.6.1   | 13.11.2023   | - Frame class updated.                                       |
 | 1.7.1   | 14.12.2023   | - Virtual destructor added.<br />- Frame class updated.      |
-| 1.8.1   | 18.12.2023   | - Region of interest params included.      |
+| 1.8.1   | 18.12.2023   | - Region of interest params included.                        |
 | 1.8.2   | 20.04.2024   | - Frame class updated.<br />- ConfigReader class updated.<br />- Documentation updated. |
-| 1.8.3   | 20.05.2024   | - Submodules updated.<br />- Documentation updated. |
+| 1.8.3   | 20.05.2024   | - Submodules updated.<br />- Documentation updated.          |
+| 1.8.4   | 06.07.2024   | - Submodules updated.<br />- CMake updated.                  |
 
 
 
@@ -86,7 +87,7 @@ CMakeLists.txt ----------------- Main CMake file of the library.
     Frame ---------------------- Source code of the Frame library.
 example ------------------------ Folder with custom video source class.
     CMakeLists.txt ------------- CMake file for example custom video source class.
-    CustomVSource.cpp ---------- Source code file of the CustomVSource class.
+    CustomVSource.cpp ---------- C++ implementation file.
     CustomVSource.h ------------ Header with CustomVSource class declaration.
     CustomVSourceVersion.h ----- Header file which includes CustomVSource version.
     CustomVSourceVersion.h.in -- CMake service file to generate version file.
@@ -112,13 +113,18 @@ src ---------------------------- Folder with source code of the library.
 **VSource** interface class declared in **VSource.h** file. Class declaration:
 
 ```cpp
+namespace cr
+{
+namespace video
+{
+/// Video source interface class.
 class VSource
 {
 public:
 
     /// Class destructor.
     virtual ~VSource();
-    
+
     /// Get string of current library version.
     static std::string getVersion();
 
@@ -167,6 +173,8 @@ public:
     /// Decode and execute command.
     virtual bool decodeAndExecuteCommand(uint8_t* data, int size) = 0;
 };
+}
+}
 ```
 
 
@@ -188,7 +196,7 @@ std::cout << "VSource class version: " << VSource::getVersion() << std::endl;
 Console output:
 
 ```bash
-VSource class version: 1.8.3
+VSource class version: 1.8.4
 ```
 
 
@@ -219,7 +227,7 @@ virtual bool initVSource(VSourceParams& params) = 0;
 
 | Parameter | Value                                                        |
 | --------- | ------------------------------------------------------------ |
-| params    | VSourceParams structure (see [VSourceParams class](#vsourceparams-class-description) description). The video source should set parameters according to params structure. Particular video source can support not all parameters listed in [VSourceParams class](#vsourceparams-class-description). |
+| params    | VSourceParams structure (see [VSourceParams class](#vsourceparams-class-description) description). The video source should set parameters according to params structure. Particular video source may support not all parameters listed in [VSourceParams class](#vsourceparams-class-description). |
 
 **Returns:** TRUE if the video source initialized or FALSE if not.
 
@@ -299,7 +307,7 @@ virtual float getParam(VSourceParam id) = 0;
 
 ## getParams method
 
-The **getParams(...)** method designed to obtain video source params structure. The particular implementation of the video source must provide thread-safe **getParams(...)** method call. This means that the **getParams(...)** method can be safely called from any thread. Method declaration:
+The **getParams(...)** method designed to obtain [VSourceParams](#vsourceparams-class-description) class which includes all video source parameters. The particular implementation of the video source must provide thread-safe **getParams(...)** method call. This means that the **getParams(...)** method can be safely called from any thread. Method declaration:
 
 ```cpp
 virtual void getParams(VSourceParams& params) = 0;
@@ -307,7 +315,7 @@ virtual void getParams(VSourceParams& params) = 0;
 
 | Parameter | Description                                       |
 | --------- | ------------------------------------------------- |
-| params    | Video source params class object (VSourceParams). |
+| params    | [VSourceParams](#vsourceparams-class-description) class object. |
 
 
 
@@ -329,7 +337,7 @@ virtual bool executeCommand(VSourceCommand id) = 0;
 
 ## encodeSetParamCommand method
 
-The **encodeSetParamCommand(...)** static method designed to encode command to change any parameter for remote video source. To control video source remotely, the developer has to design his own protocol and according to it encode the command and deliver it over the communication channel. To simplify this, the **VSource** class contains static methods for encoding the control command. The **VSource** class provides two types of commands: a parameter change command (SET_PARAM) and an action command (COMMAND). **encodeSetParamCommand(...)** designed to encode SET_PARAM command. Method declaration:
+The **encodeSetParamCommand(...)** static method designed to encode command to change any parameter in remote video source. To control video source remotely, the developer has to design his own protocol and according to it encode the command and deliver it over the communication channel. To simplify this, the **VSource** class contains static methods for encoding the control command. The **VSource** class provides two types of commands: a parameter change command (SET_PARAM) and an action command (COMMAND). **encodeSetParamCommand(...)** designed to encode SET_PARAM command. Method declaration:
 
 ```cpp
 static void encodeSetParamCommand(uint8_t* data, int& size, VSourceParam id, float value);
@@ -359,7 +367,7 @@ VSurce::encodeSetParamCommand(data, size, VSourceParam::EXPOSURE, outValue);
 
 ## encodeCommand method
 
-The **encodeCommand(...)** static method designed to encode command for remote video source. To control a video source remotely, the developer has to design his own protocol and according to it encode the command and deliver it over the communication channel. To simplify this, the **VSource** class contains static methods for encoding the control command. The **VSource** class provides two types of commands: a parameter change command (SET_PARAM) and an action command (COMMAND). **encodeCommand(...)** designed to encode COMMAND (action command). Method declaration:
+The **encodeCommand(...)** static method designed to encode command to perform action command in remote video source. To control a video source remotely, the developer has to design his own protocol and according to it encode the command and deliver it over the communication channel. To simplify this, the **VSource** class contains static methods for encoding the control command. The **VSource** class provides two types of commands: a parameter change command (SET_PARAM) and an action command (COMMAND). **encodeCommand(...)** designed to encode COMMAND (action command). Method declaration:
 
 ```cpp
 static void encodeCommand(uint8_t* data, int& size, VSourceCommand id);
@@ -523,10 +531,10 @@ enum class VSourceParam
 | CYCLE_TIME_MKS | read only    | Video capture cycle time. **VSource** class sets this value automatically. This parameter means time interval between two captured video frame. |
 | FPS            | read / write | FPS. User can set frame FPS before initialization or after. Some video source classes may set FPS automatically. |
 | IS_OPEN        | read only    | Open flag. 0 - not open, 1 - open.                           |
-| ROI_X          | read / write | Region of interest x coordinate.                              |
-| ROI_Y          | read / write | Region of interest y coordinate.                              |
-| ROI_WIDTH      | read / write | Region of interest width.                                     |
-| ROI_HEIGHT     | read / write | Region of interest height.                                    |
+| ROI_X          | read / write | Region of interest x coordinate.                             |
+| ROI_Y          | read / write | Region of interest y coordinate.                             |
+| ROI_WIDTH      | read / write | Region of interest width.                                    |
+| ROI_HEIGHT     | read / write | Region of interest height.                                   |
 | CUSTOM_1       | read / write | Custom parameter. Depends on implementation.                 |
 | CUSTOM_2       | read / write | Custom parameter. Depends on implementation.                 |
 | CUSTOM_3       | read / write | Custom parameter. Depends on implementation.                 |
@@ -659,10 +667,10 @@ bool encode(uint8_t* data, int bufferSize, int& size, VSourceParamsMask* mask = 
 
 | Parameter  | Value                                                        |
 | ---------- | ------------------------------------------------------------ |
-| data       | Pointer to data buffer. |
-| size       | Size of encoded data. 78 bytes by default.                   |
+| data       | Pointer to data buffer.                                      |
+| size       | Size of encoded data. 79 bytes by default.                   |
 | bufferSize | Data buffer size. If buffer size smaller than required, buffer will be filled with fewer parameters.           |
-| mask       | Parameters mask - pointer to **VSourceParamsMask** structure. **VSourceParamsMask** (declared in VSource.h file) determines flags for each field (parameter) declared in **VSourceParams** class. If the user wants to exclude any parameters from serialization, he can put a pointer to the mask. If the user wants to exclude a particular parameter from serialization, he should set the corresponding flag in the VSourceParamsMask structure. |
+| mask       | Parameters mask - pointer to **VSourceParamsMask** structure. **VSourceParamsMask** (declared in **VSource.h** file) determines flags for each field (parameter) declared in **VSourceParams** class. If the user wants to exclude any parameters from serialization, he can put a pointer to the mask. If the user wants to exclude a particular parameter from serialization, he should set the corresponding flag in the VSourceParamsMask structure. |
 
 **VSourceParamsMask** structure declaration:
 
@@ -696,7 +704,7 @@ Example without parameters mask:
 ```cpp
 // Prepare random params.
 VSourceParams in;
-in.initString = "alsfghljb";
+in.initString = "any string";
 in.logLevel = 0;
 
 // Encode data.
@@ -711,7 +719,7 @@ Example without parameters mask:
 ```cpp
 // Prepare random params.
 VSourceParams in;
-in.initString = "alsfghljb";
+in.initString = "any string";
 in.logLevel = 0;
 
 // Prepare params mask.
@@ -840,7 +848,7 @@ git submodule add https://github.com/ConstantRobotics-Ltd/VSource.git 3rdparty/V
 git submodule update --init --recursive
 ```
 
-In you repository folder will be created folder **3rdparty/VSource** which contains files of **VSource** repository with subrepositories **Frame** and **ConfigReader**. New structure of your repository:
+In you repository folder will be created folder **3rdparty/VSource** which contains files of **VSource** repository with sub-repositories **Frame** and **ConfigReader**. Also you can copy **VSource** repository folder in **3rdparty** folder of your repository. New structure of your repository:
 
 ```bash
 CMakeLists.txt
@@ -892,7 +900,7 @@ if (${PARENT}_SUBMODULE_VSOURCE)
 endif()
 ```
 
-File **3rdparty/CMakeLists.txt** adds folder **VSource** to your project and excludes test application and example (VSource class test applications and example of custom video source class implementation) from compiling. Your repository new structure will be:
+File **3rdparty/CMakeLists.txt** adds folder **VSource** to your project and excludes test application and example (VSource class test applications and example of custom video source class implementation) from compiling (by default test application and example are excluded from compiling if **VSource** included as sub-repository). Your repository new structure will be:
 
 ```bash
 CMakeLists.txt
@@ -926,6 +934,11 @@ Done!
 The **VSource** class provides only an interface, data structures, and methods for encoding and decoding commands and params. To create your own implementation of the video source, you must include the VSource repository in your project (see [Build and connect to your project](#build-and-connect-to-your-project) section). The catalogue **example** (see [Library files](#library-files) section) includes an example of the design of the custom video source. You must implement all the methods of the VSource interface class. Custom video source class declaration:
 
 ```cpp
+namespace cr
+{
+namespace video
+{
+/// Custom video source class.
 class CustomVSource: public VSource
 {
 public:
@@ -940,34 +953,34 @@ public:
     static std::string getVersion();
 
     /// Open video source.
-    bool openVSource(std::string& initString);
+    bool openVSource(std::string& initString) override;
 
     /// Init video source.
-    bool initVSource(VSourceParams& params);
+    bool initVSource(VSourceParams& params) override;
 
     /// Get open status.
-    bool isVSourceOpen();
+    bool isVSourceOpen() override;
 
     /// Close video source.
-    void closeVSource();
+    void closeVSource() override;
 
     /// Get new video frame.
-    bool getFrame(Frame& frame, int32_t timeoutMsec = 0);
+    bool getFrame(Frame& frame, int32_t timeoutMsec = 0) override;
 
     /// Set video source param.
-    bool setParam(VSourceParam id, float value);
+    bool setParam(VSourceParam id, float value) override;
 
     /// Get video source param value.
-    float getParam(VSourceParam id);
+    float getParam(VSourceParam id) override;
 
     /// Get video source params structure.
-    void getParams(VSourceParams& params);
+    void getParams(VSourceParams& params) override;
 
     /// Execute command.
-    bool executeCommand(VSourceCommand id);
+    bool executeCommand(VSourceCommand id) override;
 
     /// Decode and execute command.
-    bool decodeAndExecuteCommand(uint8_t* data, int size);
+    bool decodeAndExecuteCommand(uint8_t* data, int size) override;
 
 private:
 
@@ -976,4 +989,6 @@ private:
     /// Output frame.
     Frame m_outputFrame;
 };
+}
+}
 ```
