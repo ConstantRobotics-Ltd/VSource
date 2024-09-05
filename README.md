@@ -265,7 +265,7 @@ virtual bool getFrame(Frame& frame, int32_t timeoutMsec = 0) = 0;
 
 | Parameter   | Value                                                        |
 | ----------- | ------------------------------------------------------------ |
-| frame       | Output video frame (see [Frame](https://rapidpixel.constantrobotics.com/docs/service-libraries/frame.html) class description). Video source class determines output pixel format. Pixel format can be set in [initVSource(...)](#initvsource-method) or [openVSource(...)](#openvsource-method) methods if particular video source supports it. |
+| frame       | Output video frame (see [Frame](https://rapidpixel.constantrobotics.com/docs/Service/Frame.html) class description). Video source class determines output pixel format. Pixel format can be set in [initVSource(...)](#initvsource-method) or [openVSource(...)](#openvsource-method) methods if particular video source supports it. |
 | timeoutMsec | Timeout to wait new frame data:<br/>- timeoutMs == -1 - Method will wait endlessly until new data arrive.<br/>- timeoutMs == 0  - Method will only check if new data exist.<br/>- timeoutMs > 0   - Method will wait new data specified time.<br />**Each video source implementation must provide described behavior.** |
 
 **Returns:** TRUE if new data exists and copied or FALSE if not.
@@ -547,7 +547,7 @@ enum class VSourceParam
 
 ## VSourceParams class declaration
 
-**VSourceParams** class used for video source initialization (**initVSource(...)** method) or to get all actual params ([getParams(...)](#getparams-method) method method). Also **VSourceParams** provide structure to write/read params from JSON files (**JSON_READABLE** macro, see [ConfigReader](https://rapidpixel.constantrobotics.com/docs/service-libraries/config-reader.html) class description) and provide methods to encode and decode params. Class declaration:
+**VSourceParams** class used for video source initialization (**initVSource(...)** method) or to get all actual params ([getParams(...)](#getparams-method) method method). Also **VSourceParams** provide structure to write/read params from JSON files (**JSON_READABLE** macro, see [ConfigReader](https://rapidpixel.constantrobotics.com/docs/Service/ConfigReader.html) class description) and provide methods to encode and decode params. Class declaration:
 
 ```cpp
 class VSourceParams
