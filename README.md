@@ -4,7 +4,7 @@
 
 # **VSource interface C++ library**
 
-**v1.8.4**
+**v1.8.5**
 
 
 
@@ -72,6 +72,7 @@
 | 1.8.2   | 20.04.2024   | - Frame class updated.<br />- ConfigReader class updated.<br />- Documentation updated. |
 | 1.8.3   | 20.05.2024   | - Submodules updated.<br />- Documentation updated.          |
 | 1.8.4   | 06.07.2024   | - Submodules updated.<br />- CMake updated.                  |
+| 1.8.5   | 28.09.2026   | - Submodules updated.<br />- Compiler warnings fixed.        |
 
 
 
@@ -196,7 +197,7 @@ std::cout << "VSource class version: " << VSource::getVersion() << std::endl;
 Console output:
 
 ```bash
-VSource class version: 1.8.4
+VSource class version: 1.8.5
 ```
 
 
@@ -614,6 +615,12 @@ public:
     JSON_READABLE(VSourceParams, logLevel, source, fourcc,
                   width, height, gainMode, exposureMode,
                   focusMode, fps, custom1, custom2, custom3);
+
+    /// Default constructor.
+    VSourceParams() = default;
+
+    /// Copy constructor.
+    VSourceParams(const VSourceParams& src) = default;
 
     /// operator =
     VSourceParams& operator= (const VSourceParams& src);

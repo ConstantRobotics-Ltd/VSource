@@ -69,7 +69,8 @@ void cr::video::CustomVSource::closeVSource()
 
 
 
-bool cr::video::CustomVSource::getFrame(Frame& frame, int32_t timeoutMsec)
+bool cr::video::CustomVSource::getFrame(Frame& frame,
+                                        [[maybe_unused]] int32_t timeoutMsec)
 {
     // Copy frame.
     frame = m_outputFrame;

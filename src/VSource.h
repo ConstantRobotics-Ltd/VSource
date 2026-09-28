@@ -105,6 +105,17 @@ public:
                   roiHeight, custom1, custom2, custom3);
 
     /**
+     * @brief Default constructor.
+     */
+    VSourceParams() = default;
+
+    /**
+     * @brief Copy constructor.
+     * @param src Source object.
+     */
+    VSourceParams(const VSourceParams& src) = default;
+
+    /**
      * @brief operator =
      * @param src Source object.
      * @return VSourceParams obect.
