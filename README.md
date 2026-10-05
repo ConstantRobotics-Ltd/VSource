@@ -4,7 +4,7 @@
 
 # **VSource interface C++ library**
 
-**v1.8.5**
+**v1.8.6**
 
 
 
@@ -73,6 +73,7 @@
 | 1.8.3   | 20.05.2024   | - Submodules updated.<br />- Documentation updated.          |
 | 1.8.4   | 06.07.2024   | - Submodules updated.<br />- CMake updated.                  |
 | 1.8.5   | 28.09.2026   | - Submodules updated.<br />- Compiler warnings fixed.        |
+| 1.8.6   | 04.10.2026   | - Frame submodule updated.                                   |
 
 
 
