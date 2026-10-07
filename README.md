@@ -4,7 +4,7 @@
 
 # **VSource interface C++ library**
 
-**v1.8.5**
+**v1.8.6**
 
 
 
@@ -44,7 +44,7 @@
 
 # Overview
 
-**VSource** C++ library provides standard interface as well defines data structures and rules for different video source classes (video capture classes). **VSource** interface class doesn't do anything, just provides interface and provides methods to encode/decode commands and encode/decode params. Also **VSource** class provides data structures for video source parameters. Different video source classes inherit interface form **VSource** C++ class. **VSource.h** file contains list of data structures ([VSourceCommand enum](#vsourcecommand-enum), [VSourceParam enum](#vsourceparam-enum) and [VSourceParams class](#vsourceparams-class-description) class). [VSourceParams class](#vsourceparams-class-description) contains video source params and includes methods to encode and decode params.  [VSourceCommand enum](#vsourcecommand-enum) contains IDs of commands supported by **VSource** class. [VSourceParam enum](#vsourceparam-enum) contains IDs of params supported by **VSource** class. All video sources should include params and commands listed in **VSource.h** file. **VSource** class interface class depends on [Frame](https://rapidpixel.constantrobotics.com/docs/Service/Frame.html) class (describes video frame data structures, source code included, Apache 2.0 license) and [ConfigReader](https://rapidpixel.constantrobotics.com/docs/Service/ConfigReader.html) library (provides methods to read/write JSON config files, source code included, Apache 2.0 license). It uses C++17 standard. The library is licensed under the **Apache 2.0** license.
+**VSource** C++ library provides standard interface as well defines data structures and rules for different video source classes (video capture classes). **VSource** interface class doesn't do anything, just provides interface and provides methods to encode/decode commands and encode/decode params. Also **VSource** class provides data structures for video source parameters. Different video source classes inherit interface form **VSource** C++ class. **VSource.h** file contains list of data structures ([VSourceCommand enum](#vsourcecommand-enum), [VSourceParam enum](#vsourceparam-enum) and [VSourceParams class](#vsourceparams-class-description) class). [VSourceParams class](#vsourceparams-class-description) contains video source params and includes methods to encode and decode params.  [VSourceCommand enum](#vsourcecommand-enum) contains IDs of commands supported by **VSource** class. [VSourceParam enum](#vsourceparam-enum) contains IDs of params supported by **VSource** class. All video sources should include params and commands listed in **VSource.h** file. **VSource** class interface class depends on [Frame](https://rapidpixel.constantrobotics.com/docs/Service/Frame.html) class (describes video frame data structures, source code included) and [ConfigReader](https://rapidpixel.constantrobotics.com/docs/Service/ConfigReader.html) library (provides methods to read/write JSON config files, source code included). It uses C++17 standard.
 
 
 
@@ -73,6 +73,7 @@
 | 1.8.3   | 20.05.2024   | - Submodules updated.<br />- Documentation updated.          |
 | 1.8.4   | 06.07.2024   | - Submodules updated.<br />- CMake updated.                  |
 | 1.8.5   | 28.09.2026   | - Submodules updated.<br />- Compiler warnings fixed.        |
+| 1.8.6   | 06.10.2026   | - **decodeCommand(...)** returned 0 ("command decoded") for a SET_PARAM command of wrong size: now -1 (the example executed RESTART for such a message).<br />- **VSourceParams::decode(...)** does not change the params if the data is not valid.<br />- **VSourceParams::encode(...)** with params mask: a parameter that fits exactly into the buffer is encoded.<br />- Null data pointers are rejected by all encode / decode methods.<br />- Example: parameter values that do not fit in an int are rejected (undefined float to int conversion).<br />- Frame class updated to v5.1.1, ConfigReader updated to v2.0.1.<br />- Tests extended. |
 
 
 
@@ -197,7 +198,7 @@ std::cout << "VSource class version: " << VSource::getVersion() << std::endl;
 Console output:
 
 ```bash
-VSource class version: 1.8.5
+VSource class version: 1.8.6
 ```
 
 
@@ -361,7 +362,7 @@ int size = 0;
 // Random parameter value.
 float outValue = (float)(rand() % 20);
 // Encode command.
-VSurce::encodeSetParamCommand(data, size, VSourceParam::EXPOSURE, outValue);
+VSource::encodeSetParamCommand(data, size, VSourceParam::EXPOSURE, outValue);
 ```
 
 
@@ -404,8 +405,8 @@ static int decodeCommand(uint8_t* data, int size, VSourceParam& paramId, VSource
 | Parameter | Description                                                  |
 | --------- | ------------------------------------------------------------ |
 | data      | Pointer to input command.                                    |
-| size      | Size of command. Should be 11 bytes for SET_PARAM and 7 bytes for COMMAND. |
-| paramId   | Parameter ID according to [VSourceParam enum](#vsourceparam-enum). After decoding SET_PARAM command the method will return parameter ID. |
+| size      | Size of command. Must be 11 bytes for SET_PARAM and at least 7 bytes for COMMAND (other sizes give -1). |
+| paramId   | Parameter ID according to [VSourceParam enum](#vsourceparam-enum). After decoding SET_PARAM command the method will return parameter ID. The value is not checked: the video source must check it (it can be any value of the type). |
 | commandId | Command ID according to [VSourceCommand enum](#vsourcecommand-enum). After decoding COMMAND the method will return command ID. |
 | value     | Parameter value (after decoding SET_PARAM command).          |
 
@@ -666,7 +667,7 @@ public:
 
 ## Serialize video source params
 
-**VSourceParams** class provides method **encode(...)** to serialize video source params (fields of VSourceParams class, see Table 4). Serialization of video source params necessary in case when you need to send video source params via communication channels. Method doesn't encode fields: **initString** and **fourcc**. Method provides options to exclude particular parameters from serialization. To do this method inserts binary mask (2 bytes) where each bit represents particular parameter and **decode(...)** method recognizes it. Method declaration:
+**VSourceParams** class provides method **encode(...)** to serialize video source params (fields of VSourceParams class, see Table 4). Serialization of video source params necessary in case when you need to send video source params via communication channels. Method doesn't encode fields: **source** and **fourcc**. Method provides options to exclude particular parameters from serialization. To do this method inserts binary mask (2 bytes) where each bit represents particular parameter and **decode(...)** method recognizes it. Method declaration:
 
 ```cpp
 bool encode(uint8_t* data, int bufferSize, int& size, VSourceParamsMask* mask = nullptr);
@@ -711,7 +712,7 @@ Example without parameters mask:
 ```cpp
 // Prepare random params.
 VSourceParams in;
-in.initString = "any string";
+in.source = "any string";
 in.logLevel = 0;
 
 // Encode data.
@@ -726,7 +727,7 @@ Example without parameters mask:
 ```cpp
 // Prepare random params.
 VSourceParams in;
-in.initString = "any string";
+in.source = "any string";
 in.logLevel = 0;
 
 // Prepare params mask.
@@ -744,7 +745,7 @@ cout << "Encoded data size: " << size << " bytes" << endl;
 
 ## Deserialize video source params
 
-**VSourceParams** class provides method **decode(...)** to deserialize video source params (fields of VSourceParams class, see Table 4). Deserialization of video source params necessary in case when you need to receive video source params via communication channels. Method doesn't decode fields: **initString** and **fourcc**. Method automatically recognizes which parameters were serialized by **encode(...)** method. Method declaration:
+**VSourceParams** class provides method **decode(...)** to deserialize video source params (fields of VSourceParams class, see Table 4). Deserialization of video source params necessary in case when you need to receive video source params via communication channels. Method doesn't decode fields: **source** and **fourcc** (they are cleared). Method automatically recognizes which parameters were serialized by **encode(...)** method. Method declaration:
 
 ```cpp
 bool decode(uint8_t* data, int dataSize);
@@ -752,7 +753,7 @@ bool decode(uint8_t* data, int dataSize);
 
 | Parameter | Value                                                        |
 | --------- | ------------------------------------------------------------ |
-| data      | Pointer to encode data buffer. Data size should be at least **62** bytes. |
+| data      | Pointer to encoded data. The params are not changed if the data is not valid (too short for the parameters its flags announce, wrong header or version). |
 | dataSize  | Size of data.                                                |
 
 **Returns:** TRUE if data decoded (deserialized) or FALSE if not.

@@ -3,6 +3,30 @@
 
 
 
+namespace
+{
+
+/**
+ * @brief Convert a parameter value to int. The value comes from the user or
+ * from a decoded command: a value that is not a number or does not fit in an
+ * int is rejected (its conversion would be undefined).
+ * @param value Parameter value.
+ * @param result Converted value (not changed if the value is rejected).
+ * @return TRUE if converted or FALSE if not.
+ */
+bool toIntParam(float value, int& result)
+{
+    // -2^31 and 2^31 are exact float values.
+    if (!(value >= -2147483648.0f && value < 2147483648.0f))
+        return false;
+    result = static_cast<int>(value);
+    return true;
+}
+
+}
+
+
+
 cr::video::CustomVSource::CustomVSource()
 {
     // Reset open flag.
@@ -87,48 +111,39 @@ bool cr::video::CustomVSource::setParam(VSourceParam id, float value)
     {
     case cr::video::VSourceParam::LOG_LEVEL:
     {
-        m_params.logLevel = (int)value;
-        return true;
+        return toIntParam(value, m_params.logLevel);
     }
     case cr::video::VSourceParam::WIDTH:
     {
-        m_params.width = (int)value;
-        return true;
+        return toIntParam(value, m_params.width);
     }
     case cr::video::VSourceParam::HEIGHT:
     {
-        m_params.height = (int)value;
-        return true;
+        return toIntParam(value, m_params.height);
     }
     case cr::video::VSourceParam::GAIN_MODE:
     {
-        m_params.gainMode = (int)value;
-        return true;
+        return toIntParam(value, m_params.gainMode);
     }
     case cr::video::VSourceParam::GAIN:
     {
-        m_params.gain = (int)value;
-        return true;
+        return toIntParam(value, m_params.gain);
     }
     case cr::video::VSourceParam::EXPOSURE_MODE:
     {
-        m_params.exposureMode = (int)value;
-        return true;
+        return toIntParam(value, m_params.exposureMode);
     }
     case cr::video::VSourceParam::EXPOSURE:
     {
-        m_params.exposure = (int)value;
-        return true;
+        return toIntParam(value, m_params.exposure);
     }
     case cr::video::VSourceParam::FOCUS_MODE:
     {
-        m_params.focusMode = (int)value;
-        return true;
+        return toIntParam(value, m_params.focusMode);
     }
     case cr::video::VSourceParam::FOCUS_POS:
     {
-        m_params.focusPos = (int)value;
-        return true;
+        return toIntParam(value, m_params.focusPos);
     }
     case cr::video::VSourceParam::CYCLE_TIME_MKS:
     {
@@ -147,23 +162,19 @@ bool cr::video::CustomVSource::setParam(VSourceParam id, float value)
     }
     case cr::video::VSourceParam::ROI_X:
     {
-        m_params.roiX = (int)value;
-        return true;
+        return toIntParam(value, m_params.roiX);
     }
     case cr::video::VSourceParam::ROI_Y:
     {
-        m_params.roiY = (int)value;
-        return true;
+        return toIntParam(value, m_params.roiY);
     }
     case cr::video::VSourceParam::ROI_WIDTH:
     {
-        m_params.roiWidth = (int)value;
-        return true;
+        return toIntParam(value, m_params.roiWidth);
     }
     case cr::video::VSourceParam::ROI_HEIGHT:
     {
-        m_params.roiHeight = (int)value;
-        return true;
+        return toIntParam(value, m_params.roiHeight);
     }
     case cr::video::VSourceParam::CUSTOM_1:
     {
@@ -185,8 +196,6 @@ bool cr::video::CustomVSource::setParam(VSourceParam id, float value)
         return false;
     }
     }
-
-    return false;
 }
 
 
@@ -198,43 +207,43 @@ float cr::video::CustomVSource::getParam(VSourceParam id)
     {
     case cr::video::VSourceParam::LOG_LEVEL:
     {
-        return (float)m_params.logLevel;
+        return static_cast<float>(m_params.logLevel);
     }
     case cr::video::VSourceParam::WIDTH:
     {
-        return (float)m_params.width;
+        return static_cast<float>(m_params.width);
     }
     case cr::video::VSourceParam::HEIGHT:
     {
-        return (float)m_params.height;
+        return static_cast<float>(m_params.height);
     }
     case cr::video::VSourceParam::GAIN_MODE:
     {
-        return (float)m_params.gainMode;
+        return static_cast<float>(m_params.gainMode);
     }
     case cr::video::VSourceParam::GAIN:
     {
-        return (float)m_params.gain;
+        return static_cast<float>(m_params.gain);
     }
     case cr::video::VSourceParam::EXPOSURE_MODE:
     {
-        return (float)m_params.exposureMode;
+        return static_cast<float>(m_params.exposureMode);
     }
     case cr::video::VSourceParam::EXPOSURE:
     {
-        return (float)m_params.exposure;
+        return static_cast<float>(m_params.exposure);
     }
     case cr::video::VSourceParam::FOCUS_MODE:
     {
-        return (float)m_params.focusMode;
+        return static_cast<float>(m_params.focusMode);
     }
     case cr::video::VSourceParam::FOCUS_POS:
     {
-        return (float)m_params.focusPos;
+        return static_cast<float>(m_params.focusPos);
     }
     case cr::video::VSourceParam::CYCLE_TIME_MKS:
     {
-        return (float)m_params.cycleTimeMks;
+        return static_cast<float>(m_params.cycleTimeMks);
     }
     case cr::video::VSourceParam::FPS:
     {
@@ -246,19 +255,19 @@ float cr::video::CustomVSource::getParam(VSourceParam id)
     }
     case cr::video::VSourceParam::ROI_X:
     {
-        return (float)m_params.roiX;
+        return static_cast<float>(m_params.roiX);
     }
     case cr::video::VSourceParam::ROI_Y:
     {
-        return (float)m_params.roiY;
+        return static_cast<float>(m_params.roiY);
     }
     case cr::video::VSourceParam::ROI_WIDTH:
     {
-        return (float)m_params.roiWidth;
+        return static_cast<float>(m_params.roiWidth);
     }
     case cr::video::VSourceParam::ROI_HEIGHT:
     {
-        return (float)m_params.roiHeight;
+        return static_cast<float>(m_params.roiHeight);
     }
     case cr::video::VSourceParam::CUSTOM_1:
     {
@@ -277,8 +286,6 @@ float cr::video::CustomVSource::getParam(VSourceParam id)
         return -1.0f;
     }
     }
-
-    return -1.0f;
 }
 
 
@@ -304,8 +311,6 @@ bool cr::video::CustomVSource::executeCommand(VSourceCommand id)
         return false;
     }
     }
-
-    return false;
 }
 
 
@@ -333,6 +338,4 @@ bool cr::video::CustomVSource::decodeAndExecuteCommand(uint8_t* data, int size)
         return false;
     }
     }
-
-    return false;
 }

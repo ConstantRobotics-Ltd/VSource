@@ -102,7 +102,7 @@ public:
 
     JSON_READABLE(VSourceParams, logLevel, source, fourcc, width, height,
                   gainMode, exposureMode, focusMode, fps, roiX, roiY, roiWidth,
-                  roiHeight, custom1, custom2, custom3);
+                  roiHeight, custom1, custom2, custom3)
 
     /**
      * @brief Default constructor.
@@ -126,17 +126,20 @@ public:
      * @brief Encode params. The method doesn't encode params:
      * source and fourcc fields.
      * @param data Pointer to data buffer.
-     * @param bufferSize Size of data biffer.
+     * @param bufferSize Size of data buffer. Params that do not fit in the
+     * buffer are not encoded (their flags are not set).
      * @param size Size of data.
      * @param mask Pointer to parameters mask.
-     * @return TRUE if params encoded or FALSE if not.
+     * @return TRUE if params encoded or FALSE if not (no buffer or buffer
+     * smaller than 7 bytes).
      */
     bool encode(uint8_t* data, int bufferSize, int& size,
                 VSourceParamsMask* mask = nullptr);
 
     /**
      * @brief Decode params. The method doesn't decode params:
-     * source and fourcc fields.
+     * source and fourcc fields (they are cleared). The params are not changed
+     * if the data is not valid.
      * @param data Pointer to data.
      * @param dataSize Size of data.
      * @return TRUE is params decoded or FALSE if not.
@@ -301,8 +304,9 @@ public:
 
     /**
      * @brief Encode set param command.
-     * @param data Pointer to data buffer. Must have size >= 11.
-     * @param size Size of encoded data.
+     * @param data Pointer to data buffer. Must have size >= 11 (the method can
+     * not check it).
+     * @param size Size of encoded data (0 if there is no buffer).
      * @param id Parameter id.
      * @param value Parameter value.
      */
@@ -311,8 +315,9 @@ public:
 
     /**
      * @brief Encode command.
-     * @param data Pointer to data buffer. Must have size >= 11.
-     * @param size Size of encoded data.
+     * @param data Pointer to data buffer. Must have size >= 7 (the method can
+     * not check it).
+     * @param size Size of encoded data (0 if there is no buffer).
      * @param id Command ID.
      */
     static void encodeCommand(
@@ -322,9 +327,11 @@ public:
      * @brief Decode command.
      * @param data Pointer to command data.
      * @param size Size of data.
-     * @param paramId Output command ID.
-     * @param commandId Output command ID.
-     * @param value Param or command value.
+     * @param paramId Output parameter ID (set param command). The value is
+     * not checked: it can be any value of the type.
+     * @param commandId Output command ID (command). The value is not checked:
+     * it can be any value of the type.
+     * @param value Param value (0 for a command).
      * @return 0 - command decoded, 1 - set param command decoded, -1 - error.
      */
     static int decodeCommand(uint8_t* data,
@@ -337,7 +344,8 @@ public:
      * @brief Decode and execute command.
      * @param data Pointer to command data.
      * @param size Size of data.
-     * @return 0 - command decoded, 1 - set param command decoded, -1 - error.
+     * @return TRUE if the command was decoded and executed (or the parameter
+     * was set) or FALSE if not.
      */
     virtual bool decodeAndExecuteCommand(uint8_t* data, int size) = 0;
 };
