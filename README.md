@@ -73,7 +73,7 @@
 | 1.8.3   | 20.05.2024   | - Submodules updated.<br />- Documentation updated.          |
 | 1.8.4   | 06.07.2024   | - Submodules updated.<br />- CMake updated.                  |
 | 1.8.5   | 28.09.2026   | - Submodules updated.<br />- Compiler warnings fixed.        |
-| 1.8.6   | 06.10.2026   | - **decodeCommand(...)** returned 0 ("command decoded") for a SET_PARAM command of wrong size: now -1 (the example executed RESTART for such a message).<br />- **VSourceParams::decode(...)** does not change the params if the data is not valid.<br />- **VSourceParams::encode(...)** with params mask: a parameter that fits exactly into the buffer is encoded.<br />- Null data pointers are rejected by all encode / decode methods.<br />- Example: parameter values that do not fit in an int are rejected (undefined float to int conversion).<br />- Frame class updated to v5.1.1, ConfigReader updated to v2.0.1.<br />- Tests extended. |
+| 1.8.6   | 06.10.2026   | - Deep code review.<br />- Frame class updated to v5.1.1, ConfigReader updated to v2.0.1.<br />- Tests extended. |
 
 
 
