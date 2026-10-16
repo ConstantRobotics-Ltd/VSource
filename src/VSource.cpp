@@ -1,357 +1,300 @@
 #include "VSource.h"
 #include "VSourceVersion.h"
+#include <array>
+#include <cstddef>
+#include <cstdint>
+#include <cstring>
+#include <limits>
+#include <string>
+#include <utility>
 
 
 
-// Link namespaces.
-using namespace std;
-using namespace cr::video;
-
-
-
-VSource::~VSource()
+namespace
 {
+// Encoded data stores int and float values as raw 4 bytes values in the byte
+// order of the host.
+static_assert(sizeof(int) == 4, "int must be 4 bytes");
+static_assert(sizeof(float) == 4, "float must be 4 bytes");
+static_assert(std::numeric_limits<float>::is_iec559, "float must be IEEE 754");
 
+/// Size of an int or float value in the encoded data, bytes.
+constexpr int VALUE_SIZE{4};
+/// Size of a bool value in the encoded data, bytes.
+constexpr int FLAG_SIZE{1};
+/// Encoded value of a TRUE bool.
+constexpr uint8_t FLAG_TRUE{0x01};
+/// Encoded value of a FALSE bool.
+constexpr uint8_t FLAG_FALSE{0x00};
+
+/// Data type of an encoded command.
+constexpr uint8_t COMMAND_DATA_TYPE{0x00};
+/// Data type of an encoded set param command.
+constexpr uint8_t SET_PARAM_DATA_TYPE{0x01};
+/// Data type of encoded params.
+constexpr uint8_t PARAMS_DATA_TYPE{0x02};
+
+/// Position of the ID in an encoded command: behind the data type and the
+/// version (major and minor).
+constexpr int COMMAND_ID_POS{3};
+/// Size of an encoded command: data type, version, command ID.
+constexpr int COMMAND_SIZE{COMMAND_ID_POS + VALUE_SIZE};
+/// Position of the value in an encoded set param command.
+constexpr int SET_PARAM_VALUE_POS{COMMAND_SIZE};
+/// Size of an encoded set param command: data type, version, param ID, value.
+constexpr int SET_PARAM_COMMAND_SIZE{SET_PARAM_VALUE_POS + VALUE_SIZE};
+static_assert(COMMAND_SIZE == 7, "wrong size of encoded command");
+static_assert(SET_PARAM_COMMAND_SIZE == 11,
+              "wrong size of encoded set param command");
+
+/// Number of VSourceParams fields in the encoded params.
+constexpr int FIELDS_NUMBER{19};
+/// Number of the fields stored as a bool (FLAG_SIZE): isOpen.
+constexpr int FLAG_FIELDS_NUMBER{1};
+/// Number of bits in a byte of the mask.
+constexpr int BITS_IN_BYTE{8};
+/// Bit of the flag of the first field in a byte of the mask: the most
+/// significant bit.
+constexpr uint8_t FIRST_MASK_BIT{0x80};
+/// Position of the mask in encoded params: behind the data type and the
+/// version (major and minor).
+constexpr int PARAMS_MASK_POS{3};
+/// Size of the mask in encoded params: one bit per field, bytes.
+constexpr int PARAMS_MASK_SIZE{3};
+static_assert(PARAMS_MASK_SIZE * BITS_IN_BYTE >= FIELDS_NUMBER,
+              "mask must have a bit for each field");
+/// Size of the header of encoded params: data type, version, mask.
+constexpr int PARAMS_HEADER_SIZE{PARAMS_MASK_POS + PARAMS_MASK_SIZE};
+/// Minimum size of the buffer for encode(...): the header and one byte.
+constexpr int PARAMS_MIN_BUFFER_SIZE{PARAMS_HEADER_SIZE + 1};
+/// Reserved bits of the mask (the bits behind the flag of the last field).
+/// The bits must be zero.
+constexpr uint8_t RESERVED_MASK_BITS{static_cast<uint8_t>(
+        (1U << (PARAMS_MASK_SIZE * BITS_IN_BYTE - FIELDS_NUMBER)) - 1U)};
+/// Maximum size of encoded params (all fields encoded).
+constexpr int PARAMS_MAX_SIZE{PARAMS_HEADER_SIZE +
+                              (FIELDS_NUMBER - FLAG_FIELDS_NUMBER) *
+                              VALUE_SIZE + FLAG_FIELDS_NUMBER * FLAG_SIZE};
+static_assert(PARAMS_MAX_SIZE == 79, "wrong size of encoded params");
+
+/// First value of VSourceParam enum.
+constexpr int FIRST_PARAM_ID{
+        static_cast<int>(cr::video::VSourceParam::LOG_LEVEL)};
+/// Last value of VSourceParam enum.
+constexpr int LAST_PARAM_ID{
+        static_cast<int>(cr::video::VSourceParam::CUSTOM_3)};
+static_assert(FIRST_PARAM_ID == 1 && LAST_PARAM_ID == 19,
+              "wrong range of VSourceParam");
+/// First value of VSourceCommand enum.
+constexpr int FIRST_COMMAND_ID{
+        static_cast<int>(cr::video::VSourceCommand::RESTART)};
+/// Last value of VSourceCommand enum.
+constexpr int LAST_COMMAND_ID{
+        static_cast<int>(cr::video::VSourceCommand::RESTART)};
+
+
+
+/// Location of a VSourceParams field in the encoded data.
+struct FieldRef
+{
+    /// Pointer to the field of a VSourceParams object.
+    void* value{nullptr};
+    /// Size of the field in the encoded data: VALUE_SIZE or FLAG_SIZE.
+    int size{0};
+    /// Pointer to the flag of the field in VSourceParamsMask.
+    bool cr::video::VSourceParamsMask::* flag{nullptr};
+};
+
+
+
+/// Get the table of VSourceParams fields in the order they are stored in the
+/// encoded data (the same order as the bits of the mask).
+std::array<FieldRef, FIELDS_NUMBER> makeFieldTable(
+        cr::video::VSourceParams& params)
+{
+    return {{
+        {&params.logLevel, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::logLevel},
+        {&params.width, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::width},
+        {&params.height, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::height},
+        {&params.gainMode, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::gainMode},
+        {&params.gain, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::gain},
+        {&params.exposureMode, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::exposureMode},
+        {&params.exposure, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::exposure},
+        {&params.focusMode, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::focusMode},
+        {&params.focusPos, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::focusPos},
+        {&params.cycleTimeMks, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::cycleTimeMks},
+        {&params.fps, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::fps},
+        {&params.isOpen, FLAG_SIZE,
+         &cr::video::VSourceParamsMask::isOpen},
+        {&params.roiX, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::roiX},
+        {&params.roiY, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::roiY},
+        {&params.roiWidth, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::roiWidth},
+        {&params.roiHeight, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::roiHeight},
+        {&params.custom1, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::custom1},
+        {&params.custom2, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::custom2},
+        {&params.custom3, VALUE_SIZE,
+         &cr::video::VSourceParamsMask::custom3}
+    }};
 }
 
 
 
-std::string VSource::getVersion()
+/// Get the position (in the encoded params) of the mask byte which contains
+/// the flag of the field.
+size_t maskPos(int field)
+{
+    return static_cast<size_t>(PARAMS_MASK_POS) +
+           static_cast<size_t>(field / BITS_IN_BYTE);
+}
+
+
+
+/// Get the bit of the flag of the field in its mask byte. The first field of
+/// a mask byte has the most significant bit.
+uint8_t maskBit(int field)
+{
+    return static_cast<uint8_t>(FIRST_MASK_BIT >> (field % BITS_IN_BYTE));
+}
+
+
+
+/// Copy the field to the encoded data. The size of a copy is a constant: the
+/// copy is inlined.
+void writeField(const FieldRef& field, uint8_t* data)
+{
+    if (field.size == FLAG_SIZE)
+    {
+        *data = *static_cast<const bool*>(field.value) ? FLAG_TRUE : FLAG_FALSE;
+    }
+    else
+    {
+        std::memcpy(data, field.value, VALUE_SIZE);
+    }
+}
+
+
+
+/// Copy the field from the encoded data. Any non-zero byte is a TRUE bool.
+void readField(const FieldRef& field, const uint8_t* data)
+{
+    if (field.size == FLAG_SIZE)
+    {
+        *static_cast<bool*>(field.value) = *data != FLAG_FALSE;
+    }
+    else
+    {
+        std::memcpy(field.value, data, VALUE_SIZE);
+    }
+}
+
+
+
+/// Set the field to zero.
+void clearField(const FieldRef& field)
+{
+    if (field.size == FLAG_SIZE)
+    {
+        *static_cast<bool*>(field.value) = false;
+    }
+    else
+    {
+        std::memset(field.value, 0, VALUE_SIZE);
+    }
+}
+
+
+
+/// Check that the ID read from a command is a value of VSourceParam enum.
+bool isParamId(int id)
+{
+    return id >= FIRST_PARAM_ID && id <= LAST_PARAM_ID;
+}
+
+
+
+/// Check that the ID read from a command is a value of VSourceCommand enum.
+bool isCommandId(int id)
+{
+    return id >= FIRST_COMMAND_ID && id <= LAST_COMMAND_ID;
+}
+}
+
+
+
+cr::video::VSource::~VSource() = default;
+
+
+
+std::string cr::video::VSource::getVersion()
 {
     return VSOURCE_VERSION;
 }
 
 
 
-VSourceParams &VSourceParams::operator= (const VSourceParams &src)
-{
-    // Check yourself.
-    if (this == &src)
-        return *this;
-
-    // Copy params.
-    logLevel = src.logLevel;
-    source = src.source;
-    fourcc = src.fourcc;
-    width = src.width;
-    height = src.height;
-    gainMode = src.gainMode;
-    gain = src.gain;
-    exposureMode = src.exposureMode;
-    exposure = src.exposure;
-    focusMode = src.focusMode;
-    focusPos = src.focusPos;
-    cycleTimeMks = src.cycleTimeMks;
-    fps = src.fps;
-    isOpen = src.isOpen;
-    roiX = src.roiX;
-    roiY = src.roiY;
-    roiWidth = src.roiWidth;
-    roiHeight = src.roiHeight;
-    custom1 = src.custom1;
-    custom2 = src.custom2;
-    custom3 = src.custom3;
-
-    return *this;
-}
-
-
-
-bool VSourceParams::encode(uint8_t* data, int bufferSize, int& size,
-                           VSourceParamsMask* mask)
+bool cr::video::VSourceParams::encode(uint8_t* data, int bufferSize, int& size,
+                                      VSourceParamsMask* mask)
 {
     // Check buffer.
-    if (data == nullptr || bufferSize < 7)
+    if (data == nullptr || bufferSize < PARAMS_MIN_BUFFER_SIZE)
     {
         size = 0;
         return false;
     }
 
-    int pos = 0;
-    // Header.
-    data[0] = 0x02;
-    // Encode version.
-    data[1] = VSOURCE_MAJOR_VERSION;
-    data[2] = VSOURCE_MINOR_VERSION;
-    // Prepare mask. Each flag is set after param is copied to buffer.
-    data[3] = 0;
-    data[4] = 0;
-    data[5] = 0;
-    pos = 6;
+    // Fill header. The flag of a field in the mask is set after the field is
+    // copied to the buffer.
+    data[0] = PARAMS_DATA_TYPE;
+    data[1] = static_cast<uint8_t>(VSOURCE_MAJOR_VERSION);
+    data[2] = static_cast<uint8_t>(VSOURCE_MINOR_VERSION);
+    std::memset(&data[PARAMS_MASK_POS], 0,
+                static_cast<size_t>(PARAMS_MASK_SIZE));
 
-    if (mask == nullptr)
-    {    
-        // Encode data.
-        if(bufferSize < pos + 4)
+    // Encode fields in the order of the mask bits.
+    const auto fields = makeFieldTable(*this);
+    int pos = PARAMS_HEADER_SIZE;
+    for (int i = 0; i < FIELDS_NUMBER; ++i)
+    {
+        const FieldRef& field = fields[static_cast<size_t>(i)];
+
+        // Skip the fields excluded by the mask.
+        if (mask != nullptr && !(mask->*(field.flag)))
         {
-            size = pos;
-            return true;
+            continue;
         }
-        memcpy(&data[pos], &logLevel, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(128);
 
-        if(bufferSize < pos + 4)
+        // A field that does not fit in the buffer is not encoded. Without a
+        // mask the encoding stops at the first field that does not fit.
+        if (bufferSize - pos < field.size)
         {
-            size = pos;
-            return true;
+            if (mask == nullptr)
+            {
+                break;
+            }
+            continue;
         }
-        memcpy(&data[pos], &width, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(64);
-        
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &height, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(32);
 
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &gainMode, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(16);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &gain, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(8);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &exposureMode, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(4);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &exposure, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(2);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &focusMode, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(1);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &focusPos, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(128);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &cycleTimeMks, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(64);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &fps, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(32);
-
-        if(bufferSize < pos + 1)
-        {
-            size = pos;
-            return true;
-        }
-        data[pos] = isOpen == true ? 0x01 : 0x00; pos += 1;
-        data[4] = data[4] | static_cast<uint8_t>(16);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &roiX, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(8);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &roiY, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(4);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }
-        memcpy(&data[pos], &roiWidth, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(2);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }    
-        memcpy(&data[pos], &roiHeight, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(1);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }   
-        memcpy(&data[pos], &custom1, 4); pos += 4;
-        data[5] = data[5] | static_cast<uint8_t>(128);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }   
-        memcpy(&data[pos], &custom2, 4); pos += 4;
-        data[5] = data[5] | static_cast<uint8_t>(64);
-
-        if(bufferSize < pos + 4)
-        {
-            size = pos;
-            return true;
-        }   
-        memcpy(&data[pos], &custom3, 4); pos += 4;
-        data[5] = data[5] | static_cast<uint8_t>(32);
-
-        size = pos;
-
-        return true;
-    }
-
-
-    if (mask->logLevel && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &logLevel, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(128);
-    }
-
-    if (mask->width && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &width, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(64);
-    }
-
-    if (mask->height && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &height, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(32);
-    }
-
-    if (mask->gainMode && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &gainMode, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(16);
-    }
-
-    if (mask->gain && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &gain, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(8);
-    }
-
-    if (mask->exposureMode && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &exposureMode, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(4);
-    }
-
-    if (mask->exposure && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &exposure, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(2);
-    }
-
-    if (mask->focusMode && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &focusMode, 4); pos += 4;
-        data[3] = data[3] | static_cast<uint8_t>(1);
-    }
-
-    if (mask->focusPos && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &focusPos, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(128);
-    }
-
-    if (mask->cycleTimeMks && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &cycleTimeMks, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(64);
-    }
-
-    if (mask->fps && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &fps, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(32);
-    }
-
-    if (mask->isOpen && (bufferSize >= pos + 1))
-    {
-        data[pos] = isOpen == true ? 0x01 : 0x00; pos += 1;
-        data[4] = data[4] | static_cast<uint8_t>(16);
-    }
-
-    if (mask->roiX && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &roiX, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(8);
-    }
-
-    if (mask->roiY && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &roiY, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(4);
-    }
-
-    if (mask->roiWidth && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &roiWidth, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(2);
-    }
-
-    if (mask->roiHeight && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &roiHeight, 4); pos += 4;
-        data[4] = data[4] | static_cast<uint8_t>(1);
-    }
-
-    if (mask->custom1 && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &custom1, 4); pos += 4;
-        data[5] = data[5] | static_cast<uint8_t>(128);
-    }
-
-    if (mask->custom2 && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &custom2, 4); pos += 4;
-        data[5] = data[5] | static_cast<uint8_t>(64);
-    }
-
-    if (mask->custom3 && (bufferSize >= pos + 4))
-    {
-        memcpy(&data[pos], &custom3, 4); pos += 4;
-        data[5] = data[5] | static_cast<uint8_t>(32);
+        writeField(field, &data[pos]);
+        pos += field.size;
+        data[maskPos(i)] = static_cast<uint8_t>(data[maskPos(i)] |
+                                                maskBit(i));
     }
 
     size = pos;
@@ -361,225 +304,60 @@ bool VSourceParams::encode(uint8_t* data, int bufferSize, int& size,
 
 
 
-bool VSourceParams::decode(uint8_t* data, int dataSize)
+bool cr::video::VSourceParams::decode(uint8_t* data, int dataSize)
 {
-    // Check data.
-    if (data == nullptr || dataSize < 6)
+    // Check data size (the header must be complete) and data type.
+    if (data == nullptr || dataSize < PARAMS_HEADER_SIZE)
+    {
         return false;
-
-    // Check header.
-    if (data[0] != 0x02)
+    }
+    if (data[0] != PARAMS_DATA_TYPE)
+    {
         return false;
+    }
 
-    // Decode version.
-    if (data[1] != VSOURCE_MAJOR_VERSION)
+    // Check version. The version (major and minor) is a part of the format.
+    if (data[1] != VSOURCE_MAJOR_VERSION || data[2] != VSOURCE_MINOR_VERSION)
+    {
         return false;
-    if (data[2] != VSOURCE_MINOR_VERSION)
+    }
+
+    // Reserved bits of the mask are zero: a set bit announces a field that
+    // this decoder does not know.
+    if ((data[PARAMS_MASK_POS + PARAMS_MASK_SIZE - 1] &
+         RESERVED_MASK_BITS) != 0)
+    {
         return false;
-
-    // The params are decoded into a copy: the object is not changed if the
-    // data is not valid.
-    VSourceParams params;
-
-    // Position where actual data stars after masks.
-    int pos = 6;
-
-    if ((data[3] & static_cast<uint8_t>(128)) == static_cast<uint8_t>(128))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.logLevel, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.logLevel = 0;
-    }
-    if ((data[3] & static_cast<uint8_t>(64)) == static_cast<uint8_t>(64))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.width, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.width = 0;
-    }
-    if ((data[3] & static_cast<uint8_t>(32)) == static_cast<uint8_t>(32))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.height, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.height = 0;
-    }
-    if ((data[3] & static_cast<uint8_t>(16)) == static_cast<uint8_t>(16))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.gainMode, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.gainMode = 0;
-    }
-    if ((data[3] & static_cast<uint8_t>(8)) == static_cast<uint8_t>(8))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.gain, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.gain = 0;
-    }
-    if ((data[3] & static_cast<uint8_t>(4)) == static_cast<uint8_t>(4))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.exposureMode, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.exposureMode = 0;
-    }
-    if ((data[3] & static_cast<uint8_t>(2)) == static_cast<uint8_t>(2))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.exposure, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.exposure = 0;
-    }
-    if ((data[3] & static_cast<uint8_t>(1)) == static_cast<uint8_t>(1))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.focusMode, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.focusMode = 0;
     }
 
+    // Decode into a temporary object: this object is changed only if the
+    // whole data is valid. The fields that are not encoded are set to zero.
+    VSourceParams result;
+    const auto fields = makeFieldTable(result);
+    int pos = PARAMS_HEADER_SIZE;
+    for (int i = 0; i < FIELDS_NUMBER; ++i)
+    {
+        const FieldRef& field = fields[static_cast<size_t>(i)];
+        const bool encoded = (data[maskPos(i)] & maskBit(i)) != 0;
+        if (!encoded)
+        {
+            clearField(field);
+            continue;
+        }
 
-    if ((data[4] & static_cast<uint8_t>(128)) == static_cast<uint8_t>(128))
-    {
-        if (dataSize < pos + 4)
+        // Check that the field is inside the data.
+        if (dataSize - pos < field.size)
+        {
             return false;
-        memcpy(&params.focusPos, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.focusPos = 0;
-    }
-    if ((data[4] & static_cast<uint8_t>(64)) == static_cast<uint8_t>(64))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.cycleTimeMks, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.cycleTimeMks = 0;
-    }
-    if ((data[4] & static_cast<uint8_t>(32)) == static_cast<uint8_t>(32))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.fps, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.fps = 0.0f;
-    }
-    if ((data[4] & static_cast<uint8_t>(16)) == static_cast<uint8_t>(16))
-    {
-        if (dataSize < pos + 1)
-            return false;
-        params.isOpen = data[pos] == 0x00 ? false : true; pos += 1;
-    }
-    else
-    {
-        params.isOpen = false;
-    }
-    if ((data[4] & static_cast<uint8_t>(8)) == static_cast<uint8_t>(8))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.roiX, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.roiX = 0;
-    }
-    if ((data[4] & static_cast<uint8_t>(4)) == static_cast<uint8_t>(4))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.roiY, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.roiY = 0;
-    }
-    if ((data[4] & static_cast<uint8_t>(2)) == static_cast<uint8_t>(2))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.roiWidth, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.roiWidth = 0;
-    }  
-    if ((data[4] & static_cast<uint8_t>(1)) == static_cast<uint8_t>(1))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.roiHeight, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.roiHeight = 0;
-    }  
-    if ((data[5] & static_cast<uint8_t>(128)) == static_cast<uint8_t>(128))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.custom1, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.custom1 = 0.0f;
-    }
-    if ((data[5] & static_cast<uint8_t>(64)) == static_cast<uint8_t>(64))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.custom2, &data[pos], 4); pos += 4;
-    }
-    else
-    {
-        params.custom2 = 0.0f;
-    }
-    if ((data[5] & static_cast<uint8_t>(32)) == static_cast<uint8_t>(32))
-    {
-        if (dataSize < pos + 4)
-            return false;
-        memcpy(&params.custom3, &data[pos], 4);
-    }
-    else
-    {
-        params.custom3 = 0.0f;
+        }
+        readField(field, &data[pos]);
+        pos += field.size;
     }
 
-    params.source = "";
-    params.fourcc = "";
-    *this = params;
+    // Strings are not encoded.
+    result.source.clear();
+    result.fourcc.clear();
+    *this = std::move(result);
 
     return true;
 }
@@ -597,22 +375,21 @@ void cr::video::VSource::encodeSetParamCommand(
     }
 
     // Fill header.
-    data[0] = 0x01;
-    data[1] = VSOURCE_MAJOR_VERSION;
-    data[2] = VSOURCE_MINOR_VERSION;
+    data[0] = SET_PARAM_DATA_TYPE;
+    data[1] = static_cast<uint8_t>(VSOURCE_MAJOR_VERSION);
+    data[2] = static_cast<uint8_t>(VSOURCE_MINOR_VERSION);
 
     // Fill data.
-    int paramId = static_cast<int>(id);
-    memcpy(&data[3], &paramId, 4);
-    memcpy(&data[7], &value, 4);
-    size = 11;
+    const int paramId = static_cast<int>(id);
+    std::memcpy(&data[COMMAND_ID_POS], &paramId, VALUE_SIZE);
+    std::memcpy(&data[SET_PARAM_VALUE_POS], &value, VALUE_SIZE);
+    size = SET_PARAM_COMMAND_SIZE;
 }
 
 
 
-void cr::video::VSource::encodeCommand(uint8_t* data,
-                                   int& size,
-                                   cr::video::VSourceCommand id)
+void cr::video::VSource::encodeCommand(
+        uint8_t* data, int& size, VSourceCommand id)
 {
     // Check buffer.
     if (data == nullptr)
@@ -622,52 +399,58 @@ void cr::video::VSource::encodeCommand(uint8_t* data,
     }
 
     // Fill header.
-    data[0] = 0x00;
-    data[1] = VSOURCE_MAJOR_VERSION;
-    data[2] = VSOURCE_MINOR_VERSION;
+    data[0] = COMMAND_DATA_TYPE;
+    data[1] = static_cast<uint8_t>(VSOURCE_MAJOR_VERSION);
+    data[2] = static_cast<uint8_t>(VSOURCE_MINOR_VERSION);
 
     // Fill data.
-    int commandId = static_cast<int>(id);
-    memcpy(&data[3], &commandId, 4);
-    size = 7;
+    const int commandId = static_cast<int>(id);
+    std::memcpy(&data[COMMAND_ID_POS], &commandId, VALUE_SIZE);
+    size = COMMAND_SIZE;
 }
 
 
 
-int cr::video::VSource::decodeCommand(uint8_t* data,
-                                  int size,
-                                  cr::video::VSourceParam& paramId,
-                                  cr::video::VSourceCommand& commandId,
-                                  float& value)
+int cr::video::VSource::decodeCommand(
+        uint8_t* data, int size, VSourceParam& paramId,
+        VSourceCommand& commandId, float& value)
 {
-    // Check data and size.
-    if (data == nullptr || size < 7)
-        return -1;
-
-    // Check version.
-    if (data[1] != VSOURCE_MAJOR_VERSION || data[2] != VSOURCE_MINOR_VERSION)
-        return -1;
-
-    // Extract data.
-    int id = 0;
-    memcpy(&id, &data[3], 4);
-    value = 0.0f;
-
-
-    // Check command type.
-    if (data[0] == 0x00)
+    // Check data and size of the shortest command.
+    if (data == nullptr || size < COMMAND_SIZE)
     {
-        commandId = static_cast<VSourceCommand>(id);
+        return -1;
+    }
+
+    // Check version. The version (major and minor) is a part of the format.
+    if (data[1] != VSOURCE_MAJOR_VERSION || data[2] != VSOURCE_MINOR_VERSION)
+    {
+        return -1;
+    }
+
+    // Extract ID.
+    int rawId = 0;
+    std::memcpy(&rawId, &data[COMMAND_ID_POS], VALUE_SIZE);
+
+    // Check command type, exact size of the command and the ID. The output
+    // arguments are changed only if the command is valid.
+    if (data[0] == COMMAND_DATA_TYPE)
+    {
+        if (size != COMMAND_SIZE || !isCommandId(rawId))
+        {
+            return -1;
+        }
+        commandId = static_cast<VSourceCommand>(rawId);
+        value = 0.0f;
         return 0;
     }
-    else if (data[0] == 0x01)
+    if (data[0] == SET_PARAM_DATA_TYPE)
     {
-        // Check size.
-        if (size != 11)
+        if (size != SET_PARAM_COMMAND_SIZE || !isParamId(rawId))
+        {
             return -1;
-
-        paramId = static_cast<VSourceParam>(id);
-        memcpy(&value, &data[7], 4);
+        }
+        paramId = static_cast<VSourceParam>(rawId);
+        std::memcpy(&value, &data[SET_PARAM_VALUE_POS], VALUE_SIZE);
         return 1;
     }
 

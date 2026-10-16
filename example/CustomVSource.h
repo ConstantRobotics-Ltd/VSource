@@ -1,4 +1,8 @@
 #pragma once
+#include <cstdint>
+#include <mutex>
+#include <string>
+#include "Frame.h"
 #include "VSource.h"
 
 
@@ -7,7 +11,8 @@ namespace cr
 {
 namespace video
 {
-/// Custom video source class.
+/// Custom video source class. All methods are thread-safe: they can be called
+/// from any thread.
 class CustomVSource: public VSource
 {
 public:
@@ -16,7 +21,19 @@ public:
     CustomVSource();
 
     /// Class destructor.
-    ~CustomVSource();
+    ~CustomVSource() override;
+
+    /// Copy constructor is deleted (the class owns a mutex).
+    CustomVSource(const CustomVSource&) = delete;
+
+    /// Move constructor is deleted (the class owns a mutex).
+    CustomVSource(CustomVSource&&) = delete;
+
+    /// Copy assignment operator is deleted (the class owns a mutex).
+    CustomVSource& operator= (const CustomVSource&) = delete;
+
+    /// Move assignment operator is deleted (the class owns a mutex).
+    CustomVSource& operator= (CustomVSource&&) = delete;
 
     /// Get string of current library version.
     static std::string getVersion();
@@ -53,10 +70,12 @@ public:
 
 private:
 
-    /// Video source params.
+    /// Video source params. Protected by m_mutex.
     VSourceParams m_params;
-    /// Output frame.
+    /// Output frame. Protected by m_mutex.
     Frame m_outputFrame;
+    /// Mutex to protect m_params and m_outputFrame.
+    std::mutex m_mutex;
 };
 }
 }
